@@ -164,16 +164,27 @@ export default function Config() {
         </div>
 
         <div style={{ display:'flex', flexDirection:'column', gap:'10px', marginBottom:'16px' }}>
-          {contas.filter(c => c.ativa != 0).map(c => (
+          {contas.filter(c => c.ativa != 0).map(c => {
+            const isMesa = (c.tipo_conta || 'pessoal') === 'mesa'
+            return (
             <div key={c.id} style={{ background:'var(--bg2)', border:'1px solid var(--border)', borderRadius:'12px', padding:'16px 20px', display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:'12px' }}>
               <div>
-                <div style={{ fontSize:'15px', fontWeight:800 }}>{c.nome}</div>
+                <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'2px' }}>
+                  <span style={{ fontSize:'15px', fontWeight:800 }}>{c.nome}</span>
+                  <span style={{
+                    fontSize:'9px', fontWeight:700, padding:'2px 7px', borderRadius:'3px', fontFamily:"'JetBrains Mono',monospace",
+                    background: isMesa ? 'rgba(212,168,67,.15)' : 'rgba(91,164,245,.12)',
+                    color: isMesa ? 'var(--yellow)' : '#5ba4f5',
+                    border: isMesa ? '1px solid rgba(212,168,67,.3)' : '1px solid rgba(91,164,245,.25)',
+                  }}>{isMesa ? 'MESA' : 'PESSOAL'}</span>
+                </div>
                 <div style={{ display:'flex', gap:'16px', marginTop:'6px', flexWrap:'wrap' }}>
                   {[
                     { lbl:'META DIA',  val: R(c.meta_diaria),      col:'var(--green)' },
                     { lbl:'STOP DIA',  val: R(c.stop_diario),       col:'var(--red)'   },
                     { lbl:'META MÊS',  val: R(c.meta_mensal),       col:'var(--green)' },
                     { lbl:'STOP MÊS',  val: R(c.stop_mensal),       col:'var(--red)'   },
+                    { lbl:'CAPITAL',   val: c.capital_disponivel ? R(c.capital_disponivel) : '—', col:'var(--txt2)' },
                   ].map(({ lbl, val, col }) => (
                     <div key={lbl}>
                       <div style={{ fontSize:'8px', color:'var(--txt3)', letterSpacing:'1px' }}>{lbl}</div>
@@ -181,11 +192,24 @@ export default function Config() {
                     </div>
                   ))}
                 </div>
+                {/* Ciclo hint */}
+                <div style={{ marginTop:'8px', fontSize:'11px', color:'var(--txt3)' }}>
+                  {isMesa
+                    ? <span style={{ color:'var(--yellow)' }}>Mesa: ciclo obrigatório — define o período de avaliação da banca.</span>
+                    : <span>Pessoal: ciclo = mês corrente por padrão · <span style={{ color:'var(--gold)', cursor:'pointer', fontWeight:600 }}
+                        onClick={() => { setCicloMod({ conta_id: c.id, nome: c.nome, pessoal: true }); setCicloForm({ conta_id: c.id, data_inicio: new Date().toISOString().slice(0,10), saldo_inicio: 0 }) }}>
+                        definir período personalizado
+                      </span></span>
+                  }
+                </div>
               </div>
-              <div style={{ display:'flex', gap:'8px' }}>
-                <button onClick={() => { setCicloMod({ conta_id: c.id, nome: c.nome }); setCicloForm({ conta_id: c.id, data_inicio: new Date().toISOString().slice(0,10), saldo_inicio: 0 }) }} style={{ padding:'7px 12px', background:'rgba(0,229,160,.1)', border:'1px solid rgba(0,229,160,.25)', color:'var(--green)', borderRadius:'6px', fontSize:'11px', fontWeight:700, cursor:'pointer' }}>
-                  ⚡ Ciclo
-                </button>
+              <div style={{ display:'flex', gap:'8px', alignItems:'center' }}>
+                {isMesa && (
+                  <button onClick={() => { setCicloMod({ conta_id: c.id, nome: c.nome }); setCicloForm({ conta_id: c.id, data_inicio: new Date().toISOString().slice(0,10), saldo_inicio: 0 }) }}
+                    style={{ padding:'7px 12px', background:'rgba(212,168,67,.12)', border:'1px solid rgba(212,168,67,.3)', color:'var(--yellow)', borderRadius:'6px', fontSize:'11px', fontWeight:700, cursor:'pointer' }}>
+                    ⚡ Novo Ciclo
+                  </button>
+                )}
                 <button onClick={() => abrirModal(c)} style={{ padding:'7px 14px', background:'var(--bg3)', border:'1px solid var(--border2)', color:'var(--txt2)', borderRadius:'6px', fontSize:'11px', fontWeight:700, cursor:'pointer' }}>
                   ✏ Editar
                 </button>
@@ -194,7 +218,7 @@ export default function Config() {
                 </button>
               </div>
             </div>
-          ))}
+          )})}
         </div>
 
         <button onClick={() => abrirModal()} style={{
@@ -367,20 +391,36 @@ export default function Config() {
       {/* ── Modal ciclo ───────────────────────────────────────────── */}
       {cicloMod && (
         <div onClick={e => e.target === e.currentTarget && setCicloMod(null)} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.75)', zIndex:200, display:'flex', alignItems:'center', justifyContent:'center', backdropFilter:'blur(4px)', padding:'20px' }}>
-          <div style={{ background:'var(--bg2)', border:'1px solid var(--border2)', borderRadius:'16px', padding:'28px', width:'100%', maxWidth:'420px' }}>
-            <div style={{ display:'flex', justifyContent:'space-between', marginBottom:'20px' }}>
-              <span style={{ fontSize:'17px', fontWeight:800 }}>⚡ Iniciar Ciclo — {cicloMod.nome}</span>
+          <div style={{ background:'var(--bg2)', border:'1px solid var(--border2)', borderRadius:'16px', padding:'28px', width:'100%', maxWidth:'440px' }}>
+            <div style={{ display:'flex', justifyContent:'space-between', marginBottom:'16px' }}>
+              <span style={{ fontSize:'17px', fontWeight:800 }}>{cicloMod.pessoal ? '📅' : '⚡'} {cicloMod.pessoal ? 'Período Personalizado' : 'Iniciar Ciclo'} — {cicloMod.nome}</span>
               <button onClick={() => setCicloMod(null)} style={{ background:'none', border:'none', color:'var(--txt3)', fontSize:'20px', cursor:'pointer' }}>✕</button>
             </div>
+
+            {/* Explicação contextual */}
+            {cicloMod.pessoal ? (
+              <div style={{ padding:'12px 14px', background:'rgba(91,164,245,.08)', border:'1px solid rgba(91,164,245,.2)', borderRadius:'8px', marginBottom:'16px', fontSize:'12px', color:'var(--txt2)', lineHeight:1.7 }}>
+                <strong style={{ color:'#5ba4f5' }}>Conta Pessoal</strong> — por padrão o ciclo é o mês corrente.
+                Defina aqui um período diferente se quiser acompanhar um intervalo específico (ex: início de uma nova fase, meta de 3 meses etc.).
+                O histórico não é apagado, só o ponto de contagem muda.
+              </div>
+            ) : (
+              <div style={{ padding:'12px 14px', background:'rgba(212,168,67,.08)', border:'1px solid rgba(212,168,67,.25)', borderRadius:'8px', marginBottom:'16px', fontSize:'12px', color:'var(--txt2)', lineHeight:1.7 }}>
+                <strong style={{ color:'var(--yellow)' }}>Conta Mesa</strong> — o ciclo define o período oficial de avaliação da banca.
+                O saldo de partida é o resultado acumulado ao início do ciclo (geralmente 0 no início, ou negativo se veio de um drawdown anterior).
+                Loss limit e progresso são calculados a partir desta data.
+              </div>
+            )}
+
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px', marginBottom:'16px' }}>
               <div><label style={lbl}>Data de Início</label><input style={inp} type="date" value={cicloForm.data_inicio||''} onChange={e => setCicloForm(p => ({...p, data_inicio: e.target.value}))} /></div>
-              <div><label style={lbl}>Saldo de Partida (R$)</label><input style={inp} type="number" value={cicloForm.saldo_inicio||''} onChange={e => setCicloForm(p => ({...p, saldo_inicio: e.target.value}))} placeholder="0 ou -4525" /></div>
+              <div><label style={lbl}>Saldo de Partida (R$)</label><input style={inp} type="number" value={cicloForm.saldo_inicio||''} onChange={e => setCicloForm(p => ({...p, saldo_inicio: e.target.value}))} placeholder="0" /></div>
             </div>
-            <p style={{ fontSize:'11px', color:'var(--red)', background:'rgba(255,69,96,.06)', border:'1px solid rgba(255,69,96,.2)', borderRadius:'6px', padding:'10px', marginBottom:'16px', lineHeight:1.6 }}>
-              ⚠ O histórico anterior é mantido. O cálculo do ciclo passa a contar desta data.
+            <p style={{ fontSize:'11px', color:'var(--txt3)', borderTop:'1px solid var(--border)', paddingTop:'12px', marginBottom:'16px', lineHeight:1.6 }}>
+              O histórico anterior é mantido. O cálculo do ciclo passa a contar desta data.
             </p>
-            <button onClick={iniciarCiclo} style={{ width:'100%', padding:'12px', background:'var(--green)', color:'#000', border:'none', borderRadius:'8px', fontSize:'14px', fontWeight:800, cursor:'pointer' }}>
-              ⚡ INICIAR CICLO
+            <button onClick={iniciarCiclo} style={{ width:'100%', padding:'12px', background: cicloMod.pessoal ? '#5ba4f5' : 'var(--green)', color:'#000', border:'none', borderRadius:'8px', fontSize:'14px', fontWeight:800, cursor:'pointer' }}>
+              {cicloMod.pessoal ? '📅 DEFINIR PERÍODO' : '⚡ INICIAR CICLO'}
             </button>
           </div>
         </div>

@@ -47,6 +47,7 @@ export default function Nav({ janelaBadge }) {
       <nav style={{ display: 'flex', gap: '3px', alignItems: 'center' }}>
         {[
           { to: '/',            label: 'Dashboard' },
+          { to: '/operar',      label: '📋 Plano' },
           { to: '/performance', label: 'Performance' },
           { to: '/config',      label: '⚙ Config' },
           ...(user?.role === 'admin' ? [{ to: '/admin', label: '⚡ Sistema', admin: true }] : []),
