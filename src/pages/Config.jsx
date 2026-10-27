@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import Nav from '../components/Nav'
 import { api } from '../lib/api'
 
@@ -9,9 +10,38 @@ function R(v) {
 const inp = { background:'var(--bg3)', border:'1px solid var(--border2)', color:'var(--txt)', padding:'9px 11px', borderRadius:'7px', fontSize:'13px', outline:'none', width:'100%', fontFamily:'inherit' }
 const lbl = { fontSize:'11px', color:'var(--txt3)', textTransform:'uppercase', letterSpacing:'.5px', display:'block', marginBottom:'4px' }
 
+function parseBRL(str) {
+  if (str === '' || str === null || str === undefined) return ''
+  const s = String(str).replace(/[R$\s]/g, '').replace(/\./g, '').replace(',', '.')
+  const n = parseFloat(s)
+  return isNaN(n) ? '' : n
+}
+function fmtBRL(val) {
+  if (val === '' || val === null || val === undefined) return ''
+  const n = parseFloat(val)
+  if (isNaN(n)) return ''
+  return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+function CurrencyInput({ value, onChange, placeholder, style }) {
+  const [raw, setRaw] = useState(fmtBRL(value))
+  useEffect(() => { setRaw(fmtBRL(value)) }, [value])
+  return (
+    <div style={{ position:'relative' }}>
+      <span style={{ position:'absolute', left:'9px', top:'50%', transform:'translateY(-50%)', fontSize:'12px', color:'var(--txt3)', pointerEvents:'none', userSelect:'none' }}>R$</span>
+      <input type="text" inputMode="decimal" value={raw}
+        onChange={e => setRaw(e.target.value)}
+        onBlur={() => { const n = parseBRL(raw); if (n !== '') { setRaw(fmtBRL(n)); onChange(n) } else { setRaw(''); onChange('') } }}
+        placeholder={placeholder || '0,00'}
+        style={{ ...style, paddingLeft:'30px' }}
+      />
+    </div>
+  )
+}
+
 const API_URL = (path) => `${(import.meta.env.VITE_API_URL || 'https://trader-backend-2v2l.onrender.com')}/api/${path}`
 
 export default function Config() {
+  const [searchParams] = useSearchParams()
   const [contas,    setContas]    = useState([])
   const [modal,     setModal]     = useState(null)
   const [cicloMod,  setCicloMod]  = useState(null)
@@ -36,7 +66,7 @@ export default function Config() {
 
   useEffect(() => { load() }, [])
 
-  function abrirModal(c = null) {
+  function abrirModal(c = null, tipoConta = null) {
     setMsg('')
     setTab('conta')
     setCkItems([])
@@ -48,7 +78,7 @@ export default function Config() {
       capital_disponivel: c.capital_disponivel || '', risco_pct: c.risco_pct || 1,
       instrumento: c.instrumento || 'WIN', tipo_conta: c.tipo_conta || 'pessoal',
       stop_pts_win: c.stop_pts_win || 200, stop_pts_wdo: c.stop_pts_wdo || 100,
-    } : { instrumento: 'WIN', tipo_conta: 'pessoal', risco_pct: 1, stop_pts_win: 200, stop_pts_wdo: 100 })
+    } : { instrumento: 'WIN', tipo_conta: tipoConta || 'pessoal', risco_pct: 1, stop_pts_win: 200, stop_pts_wdo: 100 })
     setModal(true)
   }
 
@@ -125,7 +155,16 @@ export default function Config() {
     loadChecklist(form.id)
   }
 
-  const f = (k) => (e) => setForm(p => ({ ...p, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }))
+  const f  = (k) => (e)  => setForm(p => ({ ...p, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }))
+  const fc = (k) => (val) => setForm(p => ({ ...p, [k]: val }))
+
+  useEffect(() => {
+    const novo = searchParams.get('novo')
+    if (novo === 'pessoal' || novo === 'mesa') {
+      abrirModal(null, novo)
+      window.history.replaceState({}, '', '/config')
+    }
+  }, [])
 
   const ckC = ckItems.filter(i => i.lado === 'COMPRA')
   const ckV = ckItems.filter(i => i.lado === 'VENDA')
@@ -267,22 +306,61 @@ export default function Config() {
 
               {/* Tab: Conta */}
               {tab === 'conta' && (
-                <div style={{ display:'flex', flexDirection:'column', gap:'14px' }}>
-                  <div><label style={lbl}>Nome</label><input style={inp} value={form.nome||''} onChange={f('nome')} placeholder="ex: Conta A" /></div>
-                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px' }}>
-                    <div><label style={lbl}>Meta Diária (R$)</label><input style={inp} type="number" value={form.meta_diaria||''} onChange={f('meta_diaria')} /></div>
-                    <div><label style={lbl}>Stop Diário (R$)</label><input style={inp} type="number" value={form.stop_diario||''} onChange={f('stop_diario')} /></div>
-                    <div><label style={lbl}>Meta Mensal (R$)</label><input style={inp} type="number" value={form.meta_mensal||''} onChange={f('meta_mensal')} /></div>
-                    <div><label style={lbl}>Stop Mensal (R$)</label><input style={inp} type="number" value={form.stop_mensal||''} onChange={f('stop_mensal')} /></div>
-                    <div><label style={lbl}>Loss Limit Ciclo (R$)</label><input style={inp} type="number" value={form.loss_limit_ciclo||''} onChange={f('loss_limit_ciclo')} /></div>
-                    <div><label style={lbl}>Custo Renovação (R$)</label><input style={inp} type="number" value={form.custo_renovacao||''} onChange={f('custo_renovacao')} /></div>
+                <div key={form.id || 'new'} style={{ display:'flex', flexDirection:'column', gap:'14px' }}>
+
+                  {/* Tipo de conta — primeiro campo */}
+                  <div>
+                    <label style={lbl}>Tipo de Conta</label>
+                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px' }}>
+                      {[
+                        { val:'pessoal', icon:'👤', label:'Pessoal', cor:'#5ba4f5', corBg:'rgba(91,164,245,.08)', corBd:'rgba(91,164,245,.3)' },
+                        { val:'mesa',    icon:'🏢', label:'Mesa Proprietária', cor:'var(--yellow)', corBg:'rgba(212,168,67,.08)', corBd:'rgba(212,168,67,.3)' },
+                      ].map(({ val, icon, label, cor, corBg, corBd }) => {
+                        const sel = (form.tipo_conta || 'pessoal') === val
+                        return (
+                          <button key={val} type="button" onClick={() => setForm(p => ({ ...p, tipo_conta: val }))} style={{
+                            padding:'10px 12px', borderRadius:'8px', border:`1px solid ${sel ? corBd : 'var(--border2)'}`,
+                            background: sel ? corBg : 'var(--bg3)', color: sel ? cor : 'var(--txt3)',
+                            fontFamily:'inherit', fontSize:'12px', fontWeight:700, cursor:'pointer', display:'flex', alignItems:'center', gap:'7px', transition:'.15s',
+                          }}>
+                            <span>{icon}</span>{label}
+                          </button>
+                        )
+                      })}
+                    </div>
+                    {(form.tipo_conta || 'pessoal') === 'mesa' && (
+                      <div style={{ marginTop:'8px', padding:'8px 11px', borderRadius:'6px', background:'rgba(212,168,67,.07)', border:'1px solid rgba(212,168,67,.2)', fontSize:'11px', color:'var(--txt3)', lineHeight:1.6 }}>
+                        Mesa: preencha <strong style={{ color:'var(--yellow)' }}>Loss Limit</strong> e <strong style={{ color:'var(--yellow)' }}>Custo de Renovação</strong> conforme as regras da sua mesa.
+                      </div>
+                    )}
                   </div>
 
-                  {/* Bloco Empresa */}
+                  <div><label style={lbl}>Nome</label><input style={inp} value={form.nome||''} onChange={f('nome')} placeholder="ex: Conta A" /></div>
+
+                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px' }}>
+                    <div><label style={lbl}>Meta Diária</label><CurrencyInput style={inp} value={form.meta_diaria||''} onChange={fc('meta_diaria')} /></div>
+                    <div><label style={lbl}>Stop Diário</label><CurrencyInput style={inp} value={form.stop_diario||''} onChange={fc('stop_diario')} /></div>
+                    <div><label style={lbl}>Meta Mensal</label><CurrencyInput style={inp} value={form.meta_mensal||''} onChange={fc('meta_mensal')} /></div>
+                    <div><label style={lbl}>Stop Mensal</label><CurrencyInput style={inp} value={form.stop_mensal||''} onChange={fc('stop_mensal')} /></div>
+                    <div>
+                      <label style={{ ...lbl, color: (form.tipo_conta||'pessoal') === 'mesa' ? 'var(--yellow)' : 'var(--txt3)' }}>
+                        Loss Limit Ciclo {(form.tipo_conta||'pessoal') === 'mesa' ? '★' : ''}
+                      </label>
+                      <CurrencyInput style={inp} value={form.loss_limit_ciclo||''} onChange={fc('loss_limit_ciclo')} />
+                    </div>
+                    <div>
+                      <label style={{ ...lbl, color: (form.tipo_conta||'pessoal') === 'mesa' ? 'var(--yellow)' : 'var(--txt3)' }}>
+                        Custo Renovação {(form.tipo_conta||'pessoal') === 'mesa' ? '★' : ''}
+                      </label>
+                      <CurrencyInput style={inp} value={form.custo_renovacao||''} onChange={fc('custo_renovacao')} />
+                    </div>
+                  </div>
+
+                  {/* Gestão de Capital */}
                   <div style={{ borderTop:'1px solid var(--border)', paddingTop:'14px' }}>
                     <div style={{ fontSize:'10px', fontWeight:700, letterSpacing:'2px', color:'var(--txt3)', textTransform:'uppercase', marginBottom:'12px' }}>Gestão de Capital</div>
                     <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px' }}>
-                      <div><label style={lbl}>Capital Disponível (R$)</label><input style={inp} type="number" value={form.capital_disponivel||''} onChange={f('capital_disponivel')} placeholder="ex: 5000" /></div>
+                      <div><label style={lbl}>Capital Disponível</label><CurrencyInput style={inp} value={form.capital_disponivel||''} onChange={fc('capital_disponivel')} placeholder="0,00" /></div>
                       <div><label style={lbl}>Risco por Operação (%)</label><input style={inp} type="number" step="0.1" value={form.risco_pct||''} onChange={f('risco_pct')} placeholder="ex: 1" /></div>
                       <div>
                         <label style={lbl}>Instrumento</label>
@@ -290,13 +368,6 @@ export default function Config() {
                           <option value="WIN">WIN — Mini Índice</option>
                           <option value="WDO">WDO — Mini Dólar</option>
                           <option value="AMBOS">WIN + WDO</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label style={lbl}>Tipo de Conta</label>
-                        <select style={inp} value={form.tipo_conta||'pessoal'} onChange={f('tipo_conta')}>
-                          <option value="pessoal">Pessoal</option>
-                          <option value="mesa">Mesa Proprietária</option>
                         </select>
                       </div>
                       {(form.instrumento === 'WIN' || form.instrumento === 'AMBOS') && (
@@ -307,6 +378,7 @@ export default function Config() {
                       )}
                     </div>
                   </div>
+
                   {msg && <p style={{ color:'var(--red)', fontSize:'13px' }}>{msg}</p>}
                   <button onClick={salvar} style={{ width:'100%', padding:'12px', background:'linear-gradient(135deg,var(--gold),var(--gold2))', color:'#0c0c0e', border:'none', borderRadius:'8px', fontSize:'14px', fontWeight:800, cursor:'pointer' }}>
                     SALVAR
@@ -414,7 +486,7 @@ export default function Config() {
 
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px', marginBottom:'16px' }}>
               <div><label style={lbl}>Data de Início</label><input style={inp} type="date" value={cicloForm.data_inicio||''} onChange={e => setCicloForm(p => ({...p, data_inicio: e.target.value}))} /></div>
-              <div><label style={lbl}>Saldo de Partida (R$)</label><input style={inp} type="number" value={cicloForm.saldo_inicio||''} onChange={e => setCicloForm(p => ({...p, saldo_inicio: e.target.value}))} placeholder="0" /></div>
+              <div><label style={lbl}>Saldo de Partida</label><CurrencyInput style={inp} value={cicloForm.saldo_inicio||''} onChange={val => setCicloForm(p => ({...p, saldo_inicio: val}))} placeholder="0,00" /></div>
             </div>
             <p style={{ fontSize:'11px', color:'var(--txt3)', borderTop:'1px solid var(--border)', paddingTop:'12px', marginBottom:'16px', lineHeight:1.6 }}>
               O histórico anterior é mantido. O cálculo do ciclo passa a contar desta data.

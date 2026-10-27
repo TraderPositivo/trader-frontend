@@ -740,9 +740,48 @@ export default function Dashboard() {
         {loading ? (
           <p style={{ color:'var(--txt3)', fontSize:'12px', textAlign:'center', padding:'32px 0' }}>Carregando…</p>
         ) : contas.length === 0 ? (
-          <div style={{ background:'var(--bg2)', border:'1px solid var(--border)', borderRadius:'12px', padding:'40px', textAlign:'center', marginBottom:'18px' }}>
-            <p style={{ color:'var(--txt2)', marginBottom:'14px' }}>Nenhuma conta cadastrada.</p>
-            <a href="/config" style={{ padding:'8px 18px', borderRadius:'7px', fontSize:'13px', fontWeight:700, background:'var(--gold-bg)', border:'1px solid var(--gold-bd)', color:'var(--gold)' }}>+ Criar conta</a>
+          <div style={{ marginBottom:'18px' }}>
+            <div style={{ textAlign:'center', marginBottom:'36px' }}>
+              <div style={{ fontSize:'36px', marginBottom:'12px' }}>📊</div>
+              <h2 style={{ fontSize:'22px', fontWeight:800, marginBottom:'6px' }}>Bem-vindo ao TraderSystem</h2>
+              <p style={{ fontSize:'13px', color:'var(--txt3)' }}>Escolha o tipo de conta para começar</p>
+            </div>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(280px,1fr))', gap:'16px', maxWidth:'720px', margin:'0 auto' }}>
+              {[
+                {
+                  tipo:'pessoal', icon:'👤', titulo:'Conta Pessoal',
+                  cor:'#5ba4f5', corBg:'rgba(91,164,245,.08)', corBd:'rgba(91,164,245,.25)',
+                  desc:'Opera com capital próprio e define seu próprio ritmo de gestão.',
+                  bullets:['Stop diário e mensal personalizados','Ciclo = mês corrente (sem renovação)','Sem loss limit obrigatório','Ideal para capital próprio'],
+                },
+                {
+                  tipo:'mesa', icon:'🏢', titulo:'Mesa Proprietária',
+                  cor:'var(--yellow)', corBg:'rgba(212,168,67,.08)', corBd:'rgba(212,168,67,.25)',
+                  desc:'Capital fornecido pela mesa com regras rígidas de ciclo e drawdown.',
+                  bullets:['Loss limit por ciclo obrigatório','Custo de renovação a cada ciclo','Regras da mesa predefinidas','Ideal para capital de terceiros'],
+                },
+              ].map(({ tipo, icon, titulo, cor, corBg, corBd, desc, bullets }) => (
+                <a key={tipo} href={`/config?novo=${tipo}`} style={{ textDecoration:'none' }}>
+                  <div style={{ background:'var(--bg2)', border:`1px solid ${corBd}`, borderRadius:'16px', padding:'28px 24px', cursor:'pointer', transition:'all .2s', display:'flex', flexDirection:'column', height:'100%', boxSizing:'border-box' }}
+                    onMouseEnter={e => { e.currentTarget.style.background=corBg; e.currentTarget.style.transform='translateY(-3px)' }}
+                    onMouseLeave={e => { e.currentTarget.style.background='var(--bg2)'; e.currentTarget.style.transform='translateY(0)' }}>
+                    <div style={{ fontSize:'36px', marginBottom:'12px' }}>{icon}</div>
+                    <div style={{ fontSize:'18px', fontWeight:800, color:cor, marginBottom:'8px' }}>{titulo}</div>
+                    <p style={{ fontSize:'12px', color:'var(--txt3)', marginBottom:'18px', lineHeight:1.7 }}>{desc}</p>
+                    <ul style={{ listStyle:'none', padding:0, margin:0, display:'flex', flexDirection:'column', gap:'7px', flex:1 }}>
+                      {bullets.map(b => (
+                        <li key={b} style={{ display:'flex', gap:'8px', fontSize:'12px', color:'var(--txt2)', alignItems:'flex-start' }}>
+                          <span style={{ color:cor, flexShrink:0 }}>✓</span>{b}
+                        </li>
+                      ))}
+                    </ul>
+                    <div style={{ marginTop:'22px', padding:'11px', background:corBg, border:`1px solid ${corBd}`, borderRadius:'8px', textAlign:'center', fontSize:'13px', fontWeight:700, color:cor }}>
+                      Configurar →
+                    </div>
+                  </div>
+                </a>
+              ))}
+            </div>
           </div>
         ) : (
           <>
