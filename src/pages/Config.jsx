@@ -50,6 +50,152 @@ function CurrencyInput({ value, onChange, placeholder, style }) {
 
 const API_URL = (path) => `${(import.meta.env.VITE_API_URL || 'https://trader-backend-2v2l.onrender.com')}/api/${path}`
 
+// ── Helpers de vencimento B3 ──────────────────────────────────────────────────
+const MES_LETRA = ['F','G','H','J','K','M','N','Q','U','V','X','Z']
+const MES_NOME  = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
+
+function terceiraQuarta(year, month) {
+  let count = 0
+  for (let d = 1; d <= 31; d++) {
+    const dt = new Date(year, month, d)
+    if (dt.getMonth() !== month) break
+    if (dt.getDay() === 3 && ++count === 3) return dt
+  }
+}
+
+function primeiroDiaUtil(year, month) {
+  for (let d = 1; d <= 5; d++) {
+    const dt = new Date(year, month, d)
+    const dow = dt.getDay()
+    if (dow !== 0 && dow !== 6) return dt
+  }
+}
+
+function proxVencimentosWIN(n = 3) {
+  const hoje = new Date()
+  const res = []
+  let y = hoje.getFullYear(), m = hoje.getMonth()
+  // meses pares (0-idx): 1=fev,3=abr,5=jun,7=ago,9=out,11=dez
+  const pares = [1,3,5,7,9,11]
+  while (res.length < n) {
+    const nextPar = pares.find(p => p >= m) ?? (pares[0] + (y++, 0))
+    // Se não achou no ano corrente, avança o ano
+    let vm = nextPar !== undefined ? nextPar : pares[0]
+    let vy = y
+    if (nextPar === undefined) { vm = pares[0]; vy = y + 1 }
+    const venc = terceiraQuarta(vy, vm)
+    if (venc > hoje) {
+      res.push({ codigo: `WIN${MES_LETRA[vm]}${String(vy).slice(2)}`, data: venc, mes: `${MES_NOME[vm]}/${vy}` })
+    }
+    m = vm + 2
+    if (m > 11) { m = m - 12; y++ }
+  }
+  return res
+}
+
+function proxVencimentosWDO(n = 3) {
+  const hoje = new Date()
+  const res = []
+  let y = hoje.getFullYear(), m = hoje.getMonth()
+  while (res.length < n) {
+    const venc = primeiroDiaUtil(y, m)
+    if (venc > hoje) {
+      res.push({ codigo: `WDO${MES_LETRA[m]}${String(y).slice(2)}`, data: venc, mes: `${MES_NOME[m]}/${y}` })
+    }
+    m++
+    if (m > 11) { m = 0; y++ }
+  }
+  return res
+}
+
+function fmtData(d) {
+  return d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric' })
+}
+
+const ATIVO_INFO = {
+  WIN: {
+    nome:     'Mini Índice Bovespa',
+    cor:      '#4caf82',
+    emoji:    '📊',
+    descricao:'Acompanha o Ibovespa — sobe e cai com as ações das maiores empresas do Brasil.',
+    tick:     'R$ 0,20 por ponto por contrato',
+    margem:   '~R$ 100–150 / contrato',
+    horario:  '9h00 – 17h55 | after: 18h – 17h55',
+    volatilidade: '500 – 2.000 pontos por dia',
+    influencia:   'Bolsas EUA, dólar, commodities, cenário político/fiscal BR',
+    vencimento:   '3ª quarta-feira dos meses pares (fev, abr, jun, ago, out, dez)',
+    exemplo:  '200 pts × R$ 0,20 × 2 cts = R$ 80 de risco',
+  },
+  WDO: {
+    nome:     'Mini Dólar (USD/BRL)',
+    cor:      '#5b9cf6',
+    emoji:    '💵',
+    descricao:'Acompanha o câmbio dólar/real — sobe quando o dólar valoriza contra o real.',
+    tick:     'R$ 10,00 por ponto por contrato',
+    margem:   '~R$ 200–300 / contrato',
+    horario:  '9h00 – 18h00 | after: 18h – 18h00',
+    volatilidade: '50 – 200 pontos por dia',
+    influencia:   'Fed (EUA), risco fiscal BR, taxa de juros (Selic), fluxo de capital',
+    vencimento:   '1º dia útil de cada mês',
+    exemplo:  '10 pts × R$ 10,00 × 1 ct = R$ 100 de risco',
+  },
+}
+
+function AtivoCard({ instrumento }) {
+  if (instrumento === 'AMBOS') {
+    return (
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px', marginTop:'10px' }}>
+        <AtivoCard instrumento="WIN" />
+        <AtivoCard instrumento="WDO" />
+      </div>
+    )
+  }
+  const info = ATIVO_INFO[instrumento]
+  if (!info) return null
+  const vencimentos = instrumento === 'WIN' ? proxVencimentosWIN(2) : proxVencimentosWDO(2)
+  return (
+    <div style={{ marginTop:'10px', padding:'12px 14px', borderRadius:'10px', background:'var(--bg3)', border:`1px solid ${info.cor}22` }}>
+      <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'10px' }}>
+        <span style={{ fontSize:'16px' }}>{info.emoji}</span>
+        <div>
+          <div style={{ fontSize:'12px', fontWeight:700, color:info.cor }}>{instrumento} — {info.nome}</div>
+          <div style={{ fontSize:'11px', color:'var(--txt3)', marginTop:'1px' }}>{info.descricao}</div>
+        </div>
+      </div>
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'6px', fontSize:'11px', marginBottom:'10px' }}>
+        {[
+          { lbl:'Valor do ponto',   val: info.tick },
+          { lbl:'Margem por ct',    val: info.margem },
+          { lbl:'Horário',          val: info.horario },
+          { lbl:'Volatilidade/dia', val: info.volatilidade },
+          { lbl:'Vencimento',       val: info.vencimento },
+          { lbl:'Influenciado por', val: info.influencia },
+        ].map(({ lbl, val }) => (
+          <div key={lbl} style={{ background:'var(--bg2)', borderRadius:'6px', padding:'7px 9px' }}>
+            <div style={{ fontSize:'9px', color:'var(--txt3)', textTransform:'uppercase', letterSpacing:'.5px', marginBottom:'2px' }}>{lbl}</div>
+            <div style={{ color:'var(--txt2)', lineHeight:1.4 }}>{val}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{ borderTop:`1px solid ${info.cor}22`, paddingTop:'9px' }}>
+        <div style={{ fontSize:'9px', color:'var(--txt3)', textTransform:'uppercase', letterSpacing:'.5px', marginBottom:'6px' }}>Próximos vencimentos</div>
+        <div style={{ display:'flex', gap:'6px', flexWrap:'wrap' }}>
+          {vencimentos.map((v, i) => (
+            <div key={v.codigo} style={{ display:'flex', gap:'5px', alignItems:'center', padding:'4px 9px', borderRadius:'5px', background: i === 0 ? `${info.cor}18` : 'var(--bg2)', border:`1px solid ${i === 0 ? info.cor+'40' : 'var(--border)'}` }}>
+              <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:'11px', fontWeight:700, color: i === 0 ? info.cor : 'var(--txt3)' }}>{v.codigo}</span>
+              <span style={{ fontSize:'10px', color:'var(--txt3)' }}>{fmtData(v.data)}</span>
+              {i === 0 && <span style={{ fontSize:'9px', color:info.cor, fontWeight:700 }}>FRENTE</span>}
+            </div>
+          ))}
+        </div>
+        <div style={{ marginTop:'8px', fontSize:'11px', color:'var(--txt3)' }}>
+          Exemplo de risco: <strong style={{ color:info.cor }}>{info.exemplo}</strong>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function Config() {
   const [searchParams] = useSearchParams()
   const [contas,    setContas]    = useState([])
@@ -411,12 +557,13 @@ export default function Config() {
                         </p>
                       </div>
                       <div style={{ gridColumn:'1/-1' }}>
-                        <label style={lbl}>Instrumento</label>
+                        <label style={lbl}>Ativo</label>
                         <select style={inp} value={form.instrumento||'WIN'} onChange={f('instrumento')}>
-                          <option value="WIN">WIN — Mini Índice (R$ 0,20/ponto)</option>
-                          <option value="WDO">WDO — Mini Dólar (R$ 10,00/ponto)</option>
+                          <option value="WIN">WIN — Mini Índice Bovespa</option>
+                          <option value="WDO">WDO — Mini Dólar (USD/BRL)</option>
                           <option value="AMBOS">WIN + WDO (opera os dois)</option>
                         </select>
+                        <AtivoCard instrumento={form.instrumento || 'WIN'} />
                       </div>
                       {(form.instrumento === 'WIN' || form.instrumento === 'AMBOS') && (
                         <div>
