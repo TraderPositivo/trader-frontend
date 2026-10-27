@@ -62,7 +62,7 @@ export default function Nav({ janelaBadge }) {
           { to: '/operar',      label: '📋 Plano' },
           { to: '/performance', label: 'Performance' },
           { to: '/lancar',      label: '✏️ Lançar', lancar: true },
-          { to: '/aluno',       label: '🎓 Aluno' },
+          { to: '/aluno',       label: '← Área do aluno' },
           { to: '/config',      label: '⚙ Config' },
           ...(user?.role === 'admin' ? [{ to: '/admin', label: '⚡ Sistema', admin: true }] : []),
         ].map(({ to, label, go, admin, lancar }) => (

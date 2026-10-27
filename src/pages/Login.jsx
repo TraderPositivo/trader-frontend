@@ -28,7 +28,7 @@ export default function Login() {
     try {
       const data = await api.post('auth', { action: 'login', email, senha })
       login(data.token, data.usuario)
-      navigate(location.state?.from || (data.usuario.role === 'admin' ? '/admin' : '/'))
+      navigate(location.state?.from || (data.usuario.role === 'admin' ? '/admin' : '/aluno'))
     } catch (err) {
       setErro(err.message)
     } finally {

@@ -21,6 +21,12 @@ export function AuthProvider({ children }) {
     setUser(userData)
   }
 
+  // atualiza os dados do usuário (ex.: plano renovado) sem novo login
+  const atualizar = (userData) => {
+    localStorage.setItem('ts_user', JSON.stringify(userData))
+    setUser(userData)
+  }
+
   const logout = () => {
     localStorage.removeItem('ts_token')
     localStorage.removeItem('ts_user')
@@ -28,7 +34,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, atualizar }}>
       {children}
     </AuthContext.Provider>
   )

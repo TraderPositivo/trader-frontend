@@ -1,10 +1,17 @@
 // Conteúdo da Área do aluno. Para liberar um item, preencha o link:
 // - indicadores: `download` (link do arquivo .ex5/.zip, ex.: Google Drive)
 // - INSTALACAO_URL: vídeo ou página com o passo a passo de instalação
+// - ZOOM_URL: link da sala ao vivo (só aparece para os planos Sala e Mentoria)
 // - lives / aulas: `youtube` (link do vídeo ou da playlist; pode ser "não listado")
 // Itens sem link aparecem como "Em breve".
 
 export const INSTALACAO_URL = ''
+
+// Sala ao vivo (Zoom): por enquanto um link único; depois, inscrição por e-mail
+export const ZOOM_URL = ''
+
+// Para onde o aluno vai quando o acesso vence
+export const RENOVAR_URL = 'https://traderpositivo.github.io/#pacotes'
 
 export const INDICADORES = [
   { nome: 'VWAP Diário',         desc: 'Preço médio do dia, zerado a cada pregão. A âncora do setup.',             download: '' },

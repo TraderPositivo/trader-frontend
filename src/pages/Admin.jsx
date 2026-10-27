@@ -8,6 +8,16 @@ const inp = {
 }
 const lbl = { fontSize: '11px', fontWeight: 600, color: 'var(--txt2)', display: 'block', marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '.4px' }
 
+const PLANOS = { lives: 'Lives Gravadas', sala: 'Sala ao Vivo', mentoria: 'Mentoria' }
+
+function hojeSP() { return new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' }) }
+function maisDias(iso, dias) {
+  const d = new Date(iso + 'T12:00:00')
+  d.setDate(d.getDate() + dias)
+  return d.toISOString().slice(0, 10)
+}
+function fmtData(iso) { return iso ? iso.split('-').reverse().join('/') : '—' }
+
 function StatCard({ label, value, color }) {
   return (
     <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '10px', padding: '18px 20px' }}>
@@ -37,8 +47,8 @@ export default function Admin() {
   function abrirModal(u = null) {
     setMsg('')
     setForm(u
-      ? { id: u.id, nome: u.nome, email: u.email, role: u.role, ativo: u.ativo, senha: '' }
-      : { role: 'user', ativo: 1, senha: '' }
+      ? { id: u.id, nome: u.nome, email: u.email, role: u.role, ativo: u.ativo, senha: '', plano: u.plano || 'sala', acesso_ate: u.acesso_ate || '' }
+      : { role: 'user', ativo: 1, senha: '', plano: 'sala', acesso_ate: maisDias(hojeSP(), 30) }
     )
     setModal(true)
   }
@@ -56,6 +66,11 @@ export default function Admin() {
     } finally {
       setSaving(false)
     }
+  }
+
+  async function renovar(u, dias = 30) {
+    await api.post('admin', { action: 'renovar_acesso', id: u.id, dias })
+    load()
   }
 
   async function toggleAtivo(u) {
@@ -134,10 +149,22 @@ export default function Admin() {
                       </span>
                     </div>
                     <p style={{ fontSize: '12px', color: 'var(--txt3)', marginTop: '1px' }}>{u.email}</p>
+                    <p style={{ fontSize: '11px', marginTop: '3px', color: 'var(--txt2)' }}>
+                      {PLANOS[u.plano] || 'Sem plano'} ·{' '}
+                      <span style={{ fontWeight: 700, color: !u.acesso_ate || u.acesso_ate < hojeSP() ? 'var(--red)' : 'var(--green)' }}>
+                        {!u.acesso_ate ? 'sem acesso' : u.acesso_ate < hojeSP() ? `venceu em ${fmtData(u.acesso_ate)}` : `acesso até ${fmtData(u.acesso_ate)}`}
+                      </span>
+                    </p>
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
+                <div style={{ display: 'flex', gap: '6px', flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                  <button onClick={() => renovar(u)} title="Soma 30 dias ao acesso" style={{
+                    padding: '6px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: 600,
+                    background: 'var(--gold-bg)', border: '1px solid var(--gold-bd)', color: 'var(--gold)',
+                  }}>
+                    +30 dias
+                  </button>
                   <button onClick={() => abrirModal(u)} style={{
                     padding: '6px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: 600,
                     background: 'var(--bg3)', border: '1px solid var(--border2)', color: 'var(--txt2)',
@@ -201,6 +228,21 @@ export default function Admin() {
                   <option value="admin">Admin</option>
                 </select>
               </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <div>
+                  <label style={lbl}>Plano</label>
+                  <select style={inp} value={form.plano || 'sala'} onChange={f('plano')}>
+                    {Object.entries(PLANOS).map(([v, n]) => <option key={v} value={v}>{n}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={lbl}>Acesso até</label>
+                  <input style={inp} type="date" value={form.acesso_ate || ''} onChange={f('acesso_ate')} />
+                </div>
+              </div>
+              <p style={{ fontSize: '11px', color: 'var(--txt3)', marginTop: '-6px' }}>
+                Depois dessa data o aluno continua entrando na Área do aluno, mas o TraderSystem fica bloqueado.
+              </p>
             </div>
 
             {msg && (
