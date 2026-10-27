@@ -25,12 +25,22 @@ function fmtBRL(val) {
 function CurrencyInput({ value, onChange, placeholder, style }) {
   const [raw, setRaw] = useState(fmtBRL(value))
   useEffect(() => { setRaw(fmtBRL(value)) }, [value])
+  function handleChange(e) {
+    // Só permite dígitos e vírgula (remove tudo mais, inclusive ponto — ponto é separador de milhar, não de decimal)
+    const filtered = e.target.value.replace(/[^\d,]/g, '')
+    setRaw(filtered)
+  }
+  function handleBlur() {
+    const n = parseBRL(raw)
+    if (n !== '') { setRaw(fmtBRL(n)); onChange(n) }
+    else { setRaw(''); onChange('') }
+  }
   return (
     <div style={{ position:'relative' }}>
       <span style={{ position:'absolute', left:'9px', top:'50%', transform:'translateY(-50%)', fontSize:'12px', color:'var(--txt3)', pointerEvents:'none', userSelect:'none' }}>R$</span>
       <input type="text" inputMode="decimal" value={raw}
-        onChange={e => setRaw(e.target.value)}
-        onBlur={() => { const n = parseBRL(raw); if (n !== '') { setRaw(fmtBRL(n)); onChange(n) } else { setRaw(''); onChange('') } }}
+        onChange={handleChange}
+        onBlur={handleBlur}
         placeholder={placeholder || '0,00'}
         style={{ ...style, paddingLeft:'30px' }}
       />
@@ -342,19 +352,18 @@ export default function Config() {
                     <div><label style={lbl}>Stop Diário</label><CurrencyInput style={inp} value={form.stop_diario||''} onChange={fc('stop_diario')} /></div>
                     <div><label style={lbl}>Meta Mensal</label><CurrencyInput style={inp} value={form.meta_mensal||''} onChange={fc('meta_mensal')} /></div>
                     <div><label style={lbl}>Stop Mensal</label><CurrencyInput style={inp} value={form.stop_mensal||''} onChange={fc('stop_mensal')} /></div>
-                    <div>
-                      <label style={{ ...lbl, color: (form.tipo_conta||'pessoal') === 'mesa' ? 'var(--yellow)' : 'var(--txt3)' }}>
-                        Loss Limit Ciclo {(form.tipo_conta||'pessoal') === 'mesa' ? '★' : ''}
-                      </label>
-                      <CurrencyInput style={inp} value={form.loss_limit_ciclo||''} onChange={fc('loss_limit_ciclo')} />
-                    </div>
-                    <div>
-                      <label style={{ ...lbl, color: (form.tipo_conta||'pessoal') === 'mesa' ? 'var(--yellow)' : 'var(--txt3)' }}>
-                        Custo Renovação {(form.tipo_conta||'pessoal') === 'mesa' ? '★' : ''}
-                      </label>
-                      <CurrencyInput style={inp} value={form.custo_renovacao||''} onChange={fc('custo_renovacao')} />
-                    </div>
                   </div>
+
+                  {/* Loss Limit e Custo Renovação — só para Mesa */}
+                  {(form.tipo_conta || 'pessoal') === 'mesa' && (
+                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px', padding:'14px', borderRadius:'10px', background:'rgba(212,168,67,.06)', border:'1px solid rgba(212,168,67,.2)' }}>
+                      <div style={{ gridColumn:'1/-1', fontSize:'10px', fontWeight:700, letterSpacing:'2px', color:'var(--yellow)', textTransform:'uppercase', marginBottom:'2px' }}>
+                        Regras da Mesa
+                      </div>
+                      <div><label style={{ ...lbl, color:'var(--yellow)' }}>Loss Limit do Ciclo ★</label><CurrencyInput style={inp} value={form.loss_limit_ciclo||''} onChange={fc('loss_limit_ciclo')} /></div>
+                      <div><label style={{ ...lbl, color:'var(--yellow)' }}>Custo de Renovação ★</label><CurrencyInput style={inp} value={form.custo_renovacao||''} onChange={fc('custo_renovacao')} /></div>
+                    </div>
+                  )}
 
                   {/* Gestão de Capital */}
                   <div style={{ borderTop:'1px solid var(--border)', paddingTop:'14px' }}>
