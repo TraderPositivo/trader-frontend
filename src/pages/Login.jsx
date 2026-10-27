@@ -1,15 +1,24 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { api } from '../lib/api'
 
 export default function Login() {
-  const [email, setEmail]     = useState('')
-  const [senha, setSenha]     = useState('')
-  const [erro, setErro]       = useState('')
-  const [loading, setLoading] = useState(false)
+  const [email, setEmail]       = useState('')
+  const [senha, setSenha]       = useState('')
+  const [erro, setErro]         = useState('')
+  const [loading, setLoading]   = useState(false)
+  const [serverOk, setServerOk] = useState(null) // null=verificando, true=ok, false=acordando
   const { login } = useAuth()
   const navigate  = useNavigate()
+
+  useEffect(() => {
+    // Acorda o backend Render antes do usuário tentar logar
+    const ctrl = new AbortController()
+    const t = setTimeout(() => setServerOk(false), 3000) // mostra aviso após 3s sem resposta
+    api.get('health').then(() => { clearTimeout(t); setServerOk(true) }).catch(() => { clearTimeout(t); setServerOk(false) })
+    return () => { clearTimeout(t); ctrl.abort() }
+  }, [])
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -92,6 +101,13 @@ export default function Login() {
                 onBlur={e => e.target.style.borderColor = 'var(--border2)'}
               />
             </div>
+
+            {serverOk === false && !loading && (
+              <div style={{ padding:'9px 13px', borderRadius:'8px', fontSize:'11px', background:'rgba(212,168,67,.08)', border:'1px solid rgba(212,168,67,.25)', color:'var(--yellow)', display:'flex', alignItems:'center', gap:'8px' }}>
+                <span style={{ fontSize:'14px' }}>⏳</span>
+                <span>Servidor acordando… a primeira conexão pode levar até 30s.</span>
+              </div>
+            )}
 
             {erro && (
               <div style={{

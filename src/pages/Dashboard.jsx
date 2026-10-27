@@ -127,6 +127,15 @@ function ContaCard({ c, selected, onClick }) {
             <div style={{ height:'3px', background:'var(--border)', borderRadius:'2px' }}>
               <div style={{ width:`${stopPct}%`, height:'100%', borderRadius:'2px', transition:'width .5s', background: stopPct >= 70 ? 'var(--red)' : stopPct >= 40 ? 'var(--yellow)' : 'var(--green)' }} />
             </div>
+            {stopPct >= 70 && (
+              <div style={{ marginTop:'8px', padding:'8px 11px', borderRadius:'7px', background:'rgba(255,82,82,.12)', border:'1px solid rgba(255,82,82,.35)', display:'flex', alignItems:'center', gap:'8px' }}>
+                <span style={{ fontSize:'16px', flexShrink:0 }}>⚠️</span>
+                <div>
+                  <div style={{ fontSize:'11px', fontWeight:700, color:'var(--red)' }}>Loss limit crítico: {stopPct.toFixed(1)}%</div>
+                  <div style={{ fontSize:'10px', color:'var(--txt3)', marginTop:'2px' }}>Considere pausar operações nessa conta.</div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

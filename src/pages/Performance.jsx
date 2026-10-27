@@ -349,55 +349,6 @@ export default function Performance() {
               </div>
             </div>
 
-            {/* Tabela de operações */}
-            <div style={{ background:'var(--bg2)', border:'1px solid var(--border)', borderRadius:'12px', overflow:'hidden', marginBottom:'14px' }}>
-              <div style={{ padding:'13px 18px', borderBottom:'1px solid var(--border)', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                <span style={{ fontSize:'13px', fontWeight:700 }}>Operações do Período</span>
-                <span style={{ fontSize:'11px', color:'var(--txt3)' }}>{d.total_ops} operações</span>
-              </div>
-              <div style={{ maxHeight:'340px', overflowY:'auto' }}>
-                <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'12px' }}>
-                  <thead>
-                    <tr>{['Data','Hora','Tipo','Inst.','Cts','Pts','Bruto','Custo','Líq',contaId==='todas'?'Conta':'Obs',''].map(h => (
-                      <th key={h} style={{ textAlign:'left', padding:'9px 10px', fontSize:'9px', letterSpacing:'1px', color:'var(--txt3)', textTransform:'uppercase', borderBottom:'1px solid var(--border)', position:'sticky', top:0, background:'var(--bg2)', whiteSpace:'nowrap' }}>{h}</th>
-                    ))}</tr>
-                  </thead>
-                  <tbody>
-                    {d.ops.map(o => {
-                      const bruto = o.resultado + (o.custo || 0)
-                      const inst  = o.instrumento || 'WIN'
-                      return (
-                        <tr key={o.id}
-                          onMouseEnter={e => e.currentTarget.querySelectorAll('td').forEach(td => td.style.background='rgba(255,255,255,.02)')}
-                          onMouseLeave={e => e.currentTarget.querySelectorAll('td').forEach(td => td.style.background='')}>
-                          <td style={{ padding:'8px 10px', borderBottom:'1px solid var(--border)', fontFamily:"'JetBrains Mono',monospace", color:'var(--txt2)', fontSize:'11px', whiteSpace:'nowrap' }}>{fmtDia(o.data_operacao)}</td>
-                          <td style={{ padding:'8px 10px', borderBottom:'1px solid var(--border)', fontFamily:"'JetBrains Mono',monospace", color:'var(--txt3)', fontSize:'11px' }}>{(o.horario_entrada||'').slice(0,5)}</td>
-                          <td style={{ padding:'8px 10px', borderBottom:'1px solid var(--border)' }}>
-                            <span style={{ display:'inline-block', padding:'2px 7px', borderRadius:'20px', fontSize:'9px', fontWeight:700, background:o.tipo==='COMPRA'?'rgba(77,159,255,.15)':'rgba(212,168,67,.15)', color:o.tipo==='COMPRA'?'#4d9fff':'var(--yellow)' }}>{o.tipo}</span>
-                          </td>
-                          <td style={{ padding:'8px 10px', borderBottom:'1px solid var(--border)', fontFamily:"'JetBrains Mono',monospace", fontSize:'10px', fontWeight:700, color:instColor(inst) }}>{inst}</td>
-                          <td style={{ padding:'8px 10px', borderBottom:'1px solid var(--border)', fontFamily:"'JetBrains Mono',monospace", fontSize:'11px', color:'var(--txt2)', textAlign:'center' }}>{o.contratos||1}</td>
-                          <td style={{ padding:'8px 10px', borderBottom:'1px solid var(--border)', fontFamily:"'JetBrains Mono',monospace", color:o.pontos>0?'var(--green)':'var(--red)', fontSize:'11px' }}>{o.pontos>0?'+':''}{o.pontos}</td>
-                          <td style={{ padding:'8px 10px', borderBottom:'1px solid var(--border)', fontFamily:"'JetBrains Mono',monospace", color:bruto>=0?'var(--green)':'var(--red)', fontSize:'11px' }}>{R(bruto)}</td>
-                          <td style={{ padding:'8px 10px', borderBottom:'1px solid var(--border)', fontFamily:"'JetBrains Mono',monospace", fontSize:'9px', color:'var(--red)' }}>{o.custo>0?`-${R(o.custo)}`:'—'}</td>
-                          <td style={{ padding:'8px 10px', borderBottom:'1px solid var(--border)', fontFamily:"'JetBrains Mono',monospace", fontWeight:700, color:o.resultado>=0?'var(--green)':'var(--red)', fontSize:'11px' }}>{R(o.resultado)}</td>
-                          <td style={{ padding:'8px 10px', borderBottom:'1px solid var(--border)', fontSize:'10px', color:'var(--txt3)', maxWidth:'140px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-                            {contaId === 'todas' ? (o.conta_nome || '—') : (o.observacao || '—')}
-                          </td>
-                          <td style={{ padding:'8px 10px', borderBottom:'1px solid var(--border)' }}>
-                            <button onClick={() => deletarOp(o.id)}
-                              onMouseEnter={e => e.target.style.color='var(--red)'}
-                              onMouseLeave={e => e.target.style.color='var(--txt3)'}
-                              style={{ background:'none', border:'none', color:'var(--txt3)', cursor:'pointer', fontSize:'12px', padding:'2px 5px' }}>✕</button>
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
             {/* Análise */}
             <div style={{ background:'var(--bg2)', border:'1px solid var(--border)', borderRadius:'12px', overflow:'hidden', marginBottom:'14px' }}>
               <div style={{ padding:'13px 18px', borderBottom:'1px solid var(--border)', display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:'10px' }}>
@@ -440,6 +391,55 @@ export default function Performance() {
                     </div>
                   </div>
                 )}
+              </div>
+            </div>
+
+            {/* Tabela de operações */}
+            <div style={{ background:'var(--bg2)', border:'1px solid var(--border)', borderRadius:'12px', overflow:'hidden', marginBottom:'14px' }}>
+              <div style={{ padding:'13px 18px', borderBottom:'1px solid var(--border)', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                <span style={{ fontSize:'13px', fontWeight:700 }}>Operações do Período</span>
+                <span style={{ fontSize:'11px', color:'var(--txt3)' }}>{d.total_ops} operações</span>
+              </div>
+              <div style={{ maxHeight:'300px', overflowY:'auto', overscrollBehavior:'contain' }}>
+                <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'12px' }}>
+                  <thead>
+                    <tr>{['Data','Hora','Tipo','Inst.','Cts','Pts','Bruto','Custo','Líq',contaId==='todas'?'Conta':'Obs',''].map(h => (
+                      <th key={h} style={{ textAlign:'left', padding:'9px 10px', fontSize:'9px', letterSpacing:'1px', color:'var(--txt3)', textTransform:'uppercase', borderBottom:'1px solid var(--border)', position:'sticky', top:0, background:'var(--bg2)', whiteSpace:'nowrap' }}>{h}</th>
+                    ))}</tr>
+                  </thead>
+                  <tbody>
+                    {d.ops.map(o => {
+                      const bruto = o.resultado + (o.custo || 0)
+                      const inst  = o.instrumento || 'WIN'
+                      return (
+                        <tr key={o.id}
+                          onMouseEnter={e => e.currentTarget.querySelectorAll('td').forEach(td => td.style.background='rgba(255,255,255,.02)')}
+                          onMouseLeave={e => e.currentTarget.querySelectorAll('td').forEach(td => td.style.background='')}>
+                          <td style={{ padding:'8px 10px', borderBottom:'1px solid var(--border)', fontFamily:"'JetBrains Mono',monospace", color:'var(--txt2)', fontSize:'11px', whiteSpace:'nowrap' }}>{fmtDia(o.data_operacao)}</td>
+                          <td style={{ padding:'8px 10px', borderBottom:'1px solid var(--border)', fontFamily:"'JetBrains Mono',monospace", color:'var(--txt3)', fontSize:'11px' }}>{(o.horario_entrada||'').slice(0,5)}</td>
+                          <td style={{ padding:'8px 10px', borderBottom:'1px solid var(--border)' }}>
+                            <span style={{ display:'inline-block', padding:'2px 7px', borderRadius:'20px', fontSize:'9px', fontWeight:700, background:o.tipo==='COMPRA'?'rgba(77,159,255,.15)':'rgba(212,168,67,.15)', color:o.tipo==='COMPRA'?'#4d9fff':'var(--yellow)' }}>{o.tipo}</span>
+                          </td>
+                          <td style={{ padding:'8px 10px', borderBottom:'1px solid var(--border)', fontFamily:"'JetBrains Mono',monospace", fontSize:'10px', fontWeight:700, color:instColor(inst) }}>{inst}</td>
+                          <td style={{ padding:'8px 10px', borderBottom:'1px solid var(--border)', fontFamily:"'JetBrains Mono',monospace", fontSize:'11px', color:'var(--txt2)', textAlign:'center' }}>{o.contratos||1}</td>
+                          <td style={{ padding:'8px 10px', borderBottom:'1px solid var(--border)', fontFamily:"'JetBrains Mono',monospace", color:o.pontos>0?'var(--green)':'var(--red)', fontSize:'11px' }}>{o.pontos>0?'+':''}{o.pontos}</td>
+                          <td style={{ padding:'8px 10px', borderBottom:'1px solid var(--border)', fontFamily:"'JetBrains Mono',monospace", color:bruto>=0?'var(--green)':'var(--red)', fontSize:'11px' }}>{R(bruto)}</td>
+                          <td style={{ padding:'8px 10px', borderBottom:'1px solid var(--border)', fontFamily:"'JetBrains Mono',monospace", fontSize:'9px', color:'var(--red)' }}>{o.custo>0?`-${R(o.custo)}`:'—'}</td>
+                          <td style={{ padding:'8px 10px', borderBottom:'1px solid var(--border)', fontFamily:"'JetBrains Mono',monospace", fontWeight:700, color:o.resultado>=0?'var(--green)':'var(--red)', fontSize:'11px' }}>{R(o.resultado)}</td>
+                          <td style={{ padding:'8px 10px', borderBottom:'1px solid var(--border)', fontSize:'10px', color:'var(--txt3)', maxWidth:'140px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                            {contaId === 'todas' ? (o.conta_nome || '—') : (o.observacao || '—')}
+                          </td>
+                          <td style={{ padding:'8px 10px', borderBottom:'1px solid var(--border)' }}>
+                            <button onClick={() => deletarOp(o.id)}
+                              onMouseEnter={e => e.target.style.color='var(--red)'}
+                              onMouseLeave={e => e.target.style.color='var(--txt3)'}
+                              style={{ background:'none', border:'none', color:'var(--txt3)', cursor:'pointer', fontSize:'12px', padding:'2px 5px' }}>✕</button>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
               </div>
             </div>
           </>
