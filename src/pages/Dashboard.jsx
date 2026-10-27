@@ -193,6 +193,146 @@ function MercadoSection({ contas, selConta }) {
   )
 }
 
+// ─── Parser CSV Profit ───────────────────────────────────────────────────────
+function parseProfitCSV(text) {
+  // normaliza encoding — substitui sequências corrompidas comuns (Windows-1252 via FileReader latin1)
+  const lines = text.split(/\r?\n/)
+
+  // acha a linha de cabeçalho (contém "Ativo" e "Abertura")
+  let headerIdx = lines.findIndex(l => l.includes('Ativo') && l.includes('Abertura'))
+  if (headerIdx === -1) throw new Error('Formato não reconhecido — não achei o cabeçalho do Profit')
+
+  const dataLines = lines.slice(headerIdx + 1).filter(l => l.trim() && !l.startsWith('Conta') && !l.startsWith('Titular'))
+
+  return dataLines.map((line, i) => {
+    const cols = line.split(';')
+    if (cols.length < 13) return null
+
+    // col 1: Abertura "23/10/2026 10:11:26"
+    const abertura  = cols[1]?.trim() || ''
+    const fechamento = cols[2]?.trim() || ''
+    const [datePart, timePart] = abertura.split(' ')
+    const [, timeSai] = (fechamento.split(' '))
+    if (!datePart) return null
+
+    // converte DD/MM/YYYY → YYYY-MM-DD
+    const [d, m, y] = datePart.split('/')
+    const dataOp = `${y}-${m}-${d}`
+
+    const lado = cols[6]?.trim() || 'C'
+    const tipo = lado === 'V' ? 'VENDA' : 'COMPRA'
+
+    // col 10: Res. Intervalo Bruto (R$) — resultado financeiro
+    const parseBR = v => parseFloat((v || '0').replace(/\./g,'').replace(',','.')) || 0
+    const resultado = parseBR(cols[12])  // Res. Operação (R$)
+    const pontos    = parseBR(cols[13])  // Res. Operação (pts)
+    const ativo     = cols[0]?.trim() || ''
+    const qtd       = cols[4]?.trim() || cols[5]?.trim() || '1'
+
+    return {
+      data_operacao:   dataOp,
+      tipo,
+      horario_entrada: (timePart  || '09:00').slice(0, 5),
+      horario_saida:   (timeSai   || '09:00').slice(0, 5),
+      pontos,
+      resultado,
+      custo:           0,
+      observacao:      `${ativo} (${qtd} cts) — Profit`,
+    }
+  }).filter(Boolean)
+}
+
+// ─── Painel Import CSV ────────────────────────────────────────────────────────
+function CsvImportPanel({ contas, selConta, onSuccess }) {
+  const [cid,      setCid]      = useState(selConta || '')
+  const [preview,  setPreview]  = useState(null)   // array de ops parsed
+  const [fileName, setFileName] = useState('')
+  const [msg,      setMsg]      = useState('')
+  const [loading,  setLoading]  = useState(false)
+  const [platform, setPlatform] = useState('profit')
+
+  useEffect(() => { if (selConta) setCid(selConta) }, [selConta])
+
+  const inp = { width:'100%', padding:'7px 9px', borderRadius:'6px', fontSize:'12px', background:'var(--bg3)', border:'1px solid var(--border2)', color:'var(--txt)', outline:'none' }
+  const lbl = { fontSize:'9px', color:'var(--txt3)', textTransform:'uppercase', letterSpacing:'1px', display:'block', marginBottom:'3px' }
+
+  function handleFile(e) {
+    const file = e.target.files[0]
+    if (!file) return
+    setFileName(file.name)
+    setMsg(''); setPreview(null)
+
+    const reader = new FileReader()
+    reader.onload = ev => {
+      try {
+        let text = ev.target.result
+        const ops = platform === 'profit' ? parseProfitCSV(text) : []
+        if (!ops.length) { setMsg('⚠ Nenhuma operação encontrada no arquivo.'); return }
+        setPreview(ops)
+      } catch (err) { setMsg('⚠ ' + err.message) }
+    }
+    reader.readAsText(file, 'windows-1252')
+  }
+
+  async function importar() {
+    if (!cid || !preview?.length) return
+    setLoading(true); setMsg('')
+    try {
+      const r = await api.post('operacoes', { action: 'importar', conta_id: parseInt(cid), ops: preview })
+      setMsg(`✓ ${r.inserted} operações importadas!`)
+      setPreview(null); setFileName('')
+      onSuccess()
+    } catch (err) { setMsg('⚠ ' + err.message) }
+    finally { setLoading(false) }
+  }
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px' }}>
+        <div>
+          <label style={lbl}>Plataforma</label>
+          <select style={inp} value={platform} onChange={e => { setPlatform(e.target.value); setPreview(null); setFileName('') }}>
+            <option value="profit">Profit (Nelogica)</option>
+            <option value="other" disabled>MT5 — em breve</option>
+          </select>
+        </div>
+        <div>
+          <label style={lbl}>Conta destino</label>
+          <select style={inp} value={cid} onChange={e => setCid(e.target.value)}>
+            {contas.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+          </select>
+        </div>
+      </div>
+
+      <label style={{ display:'block', border:'2px dashed var(--border2)', borderRadius:'8px', padding:'18px', textAlign:'center', cursor:'pointer', background:'var(--bg3)', color:'var(--txt3)', fontSize:'12px' }}>
+        <input type="file" accept=".csv,.txt" style={{ display:'none' }} onChange={handleFile} />
+        {fileName ? <><div style={{ color:'var(--txt)', fontWeight:700, marginBottom:'3px' }}>📄 {fileName}</div><div>clique para trocar</div></> : <><div style={{ fontSize:'22px', marginBottom:'4px' }}>📂</div><div>Clique para selecionar o CSV do Profit</div><div style={{ fontSize:'10px', marginTop:'3px' }}>Exportar em: Relatório → Operações Realizadas → CSV</div></>}
+      </label>
+
+      {preview && (
+        <div style={{ background:'var(--bg3)', border:'1px solid var(--border2)', borderRadius:'8px', padding:'10px', maxHeight:'160px', overflowY:'auto' }}>
+          <div style={{ fontSize:'10px', color:'var(--txt3)', marginBottom:'6px', textTransform:'uppercase', letterSpacing:'1px' }}>{preview.length} operações detectadas</div>
+          {preview.map((op, i) => (
+            <div key={i} style={{ display:'flex', justifyContent:'space-between', padding:'4px 0', borderBottom:'1px solid var(--border)', fontSize:'11px' }}>
+              <span style={{ color:'var(--txt3)' }}>{op.data_operacao} {op.horario_entrada}</span>
+              <span style={{ color: op.tipo === 'COMPRA' ? 'var(--green)' : 'var(--red)', fontWeight:700 }}>{op.tipo}</span>
+              <span style={{ fontFamily:"'JetBrains Mono',monospace", fontWeight:700, color: op.resultado >= 0 ? 'var(--green)' : 'var(--red)' }}>
+                {op.resultado >= 0 ? '+' : ''}R$ {op.resultado.toLocaleString('pt-BR', { minimumFractionDigits:2 })}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {msg && <div style={{ fontSize:'12px', padding:'8px 10px', borderRadius:'6px', textAlign:'center', background: msg.startsWith('✓') ? 'rgba(76,175,130,.08)' : 'rgba(224,92,106,.08)', border: `1px solid ${msg.startsWith('✓') ? 'rgba(76,175,130,.25)' : 'rgba(224,92,106,.25)'}`, color: msg.startsWith('✓') ? 'var(--green)' : 'var(--red)' }}>{msg}</div>}
+
+      <button onClick={importar} disabled={!preview?.length || loading} style={{ width:'100%', padding:'11px', background:'linear-gradient(135deg,#c9a84c,#e8c97a)', color:'#0c0c0e', border:'none', borderRadius:'7px', fontSize:'13px', fontWeight:800, opacity:(!preview?.length || loading) ? .5 : 1, cursor: preview?.length ? 'pointer' : 'not-allowed' }}>
+        {loading ? 'IMPORTANDO…' : preview ? `IMPORTAR ${preview.length} OPERAÇÕES` : 'SELECIONE UM ARQUIVO'}
+      </button>
+    </div>
+  )
+}
+
 // ─── Painel Registrar ────────────────────────────────────────────────────────
 function RegisterPanel({ contas, selConta, onSuccess }) {
   const hoje = hojeISO(), hora = horaAtual()
@@ -466,13 +606,11 @@ export default function Dashboard() {
 
             {/* Painéis inferiores */}
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'14px' }}>
-              <Panel title="📝 Registrar Operação" tabs={[{id:'manual',label:'Manual'},{id:'csv',label:'📂 CSV'}]} activeTab={regTab} onTab={setRegTab}>
+              <Panel title="📝 Registrar Operação" tabs={[{id:'manual',label:'Manual'},{id:'csv',label:'📂 Importar CSV'}]} activeTab={regTab} onTab={setRegTab}>
                 {regTab === 'manual' ? (
                   <RegisterPanel contas={contas} selConta={selId} onSuccess={load} />
                 ) : (
-                  <div style={{ textAlign:'center', padding:'30px 0', color:'var(--txt3)', fontSize:'13px' }}>
-                    Importação CSV em breve.
-                  </div>
+                  <CsvImportPanel contas={contas} selConta={selId} onSuccess={load} />
                 )}
               </Panel>
 
