@@ -137,6 +137,141 @@ function ContaCard({ c, selected, onClick }) {
   )
 }
 
+// ─── Calculadora de Contratos ────────────────────────────────────────────────
+const CUSTO_WIN = 0.15  // R$ por contrato round trip (emolumentos + registro B3)
+const CUSTO_WDO = 1.50  // R$ por contrato round trip
+
+function calcContratos(capital, riscoPct, stopWin, stopWdo) {
+  const risco = capital * (riscoPct / 100)
+  const ctsWin = Math.max(1, Math.floor(risco / (stopWin * 0.20)))
+  const ctsWdo = Math.max(1, Math.floor(risco / (stopWdo * 10.00)))
+  return {
+    risco,
+    win: {
+      cts:       ctsWin,
+      stop_pts:  stopWin,
+      stop_r:    ctsWin * stopWin * 0.20,
+      alvo_r:    ctsWin * stopWin * 0.20 * 2,
+      custo:     +(ctsWin * CUSTO_WIN).toFixed(2),
+      breakeven: Math.ceil((ctsWin * CUSTO_WIN) / (ctsWin * 0.20)),
+      margem:    ctsWin * 100,  // ~R$100/contrato WIN
+    },
+    wdo: {
+      cts:       ctsWdo,
+      stop_pts:  stopWdo,
+      stop_r:    ctsWdo * stopWdo * 10.00,
+      alvo_r:    ctsWdo * stopWdo * 10.00 * 2,
+      custo:     +(ctsWdo * CUSTO_WDO).toFixed(2),
+      breakeven: Math.ceil((ctsWdo * CUSTO_WDO) / (ctsWdo * 10.00)),
+      margem:    ctsWdo * 200,  // ~R$200/contrato WDO
+    },
+  }
+}
+
+function CalculadoraSection({ contas, selConta }) {
+  const c = contas.find(x => x.id === selConta)
+  if (!c || !parseFloat(c.capital_disponivel)) return null
+
+  const capital  = parseFloat(c.capital_disponivel) || 0
+  const riscoPct = parseFloat(c.risco_pct) || 1
+  const stopWin  = parseInt(c.stop_pts_win) || 200
+  const stopWdo  = parseInt(c.stop_pts_wdo) || 100
+  const inst     = c.instrumento || 'WIN'
+
+  const calc = calcContratos(capital, riscoPct, stopWin, stopWdo)
+  const roi  = capital > 0 ? (parseFloat(c.lucro_ciclo) / capital * 100) : 0
+  const roiMeta = capital > 0 && c.meta_mensal > 0 ? (c.meta_mensal / capital * 100) : 0
+
+  const blk = (label, val, sub, col = 'var(--txt)') => (
+    <div key={label} style={{ background:'var(--bg3)', border:'1px solid var(--border)', borderRadius:'8px', padding:'10px 13px', minWidth:'90px' }}>
+      <div style={{ fontSize:'9px', color:'var(--txt3)', textTransform:'uppercase', letterSpacing:'.8px', marginBottom:'3px' }}>{label}</div>
+      <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:'16px', fontWeight:700, color:col, lineHeight:1 }}>{val}</div>
+      {sub && <div style={{ fontSize:'9px', color:'var(--txt3)', marginTop:'3px' }}>{sub}</div>}
+    </div>
+  )
+
+  const instrBlock = (nome, d, cor) => (
+    <div style={{ background:'var(--bg2)', border:`1px solid ${cor}22`, borderRadius:'10px', padding:'12px 16px' }}>
+      <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'10px' }}>
+        <div style={{ width:'6px', height:'6px', borderRadius:'50%', background:cor }} />
+        <span style={{ fontSize:'11px', fontWeight:700, color:cor, textTransform:'uppercase', letterSpacing:'1px' }}>{nome}</span>
+        <span style={{ fontSize:'10px', color:'var(--txt3)' }}>· {nome === 'WIN' ? 'R$ 0,20/pt/ct' : 'R$ 10,00/pt/ct'}</span>
+      </div>
+      <div style={{ display:'flex', gap:'8px', flexWrap:'wrap' }}>
+        {blk('Contratos', d.cts, `${d.margem > 0 ? 'Margem ~'+R(d.margem) : ''}`, cor)}
+        {blk('Stop', `${d.stop_pts}pts`, R(-d.stop_r), 'var(--red)')}
+        {blk('Alvo 1:2', `${d.stop_pts*2}pts`, R(d.alvo_r), 'var(--green)')}
+        {blk('Break-even', `${d.breakeven}pts`, `Custo ${R(d.custo)}`, 'var(--txt3)')}
+      </div>
+    </div>
+  )
+
+  return (
+    <div style={{ marginBottom:'18px' }}>
+      <div style={{ fontSize:'10px', fontWeight:700, letterSpacing:'3px', textTransform:'uppercase', color:'var(--txt3)', marginBottom:'10px', display:'flex', alignItems:'center', gap:'8px' }}>
+        Calculadora <div style={{ flex:1, height:'1px', background:'var(--border)' }} />
+        <span style={{ fontWeight:400, fontSize:'9px' }}>Capital: {R(capital)} · Risco: {riscoPct}% = {R(calc.risco)}/operação</span>
+      </div>
+
+      <div style={{ display:'grid', gap:'8px', gridTemplateColumns: inst === 'AMBOS' ? '1fr 1fr' : '1fr' }}>
+        {(inst === 'WIN' || inst === 'AMBOS') && instrBlock('WIN', calc.win, '#4caf82')}
+        {(inst === 'WDO' || inst === 'AMBOS') && instrBlock('WDO', calc.wdo, '#5b9cf6')}
+      </div>
+
+      <div style={{ display:'flex', gap:'8px', marginTop:'8px', flexWrap:'wrap' }}>
+        {blk('ROI Ciclo', `${roi >= 0 ? '+' : ''}${roi.toFixed(2)}%`, `sobre ${R(capital)}`, roi >= 0 ? 'var(--green)' : 'var(--red)')}
+        {roiMeta > 0 && blk('Meta ROI', `${roiMeta.toFixed(2)}%/mês`, `= ${R(c.meta_mensal)}`, 'var(--gold)')}
+        {c.custo_renovacao > 0 && blk('Renovação', R(-c.custo_renovacao), 'custo fixo ciclo', 'var(--txt3)')}
+      </div>
+    </div>
+  )
+}
+
+// ─── Vista Consolidada ────────────────────────────────────────────────────────
+function ConsolidadoSection({ contas }) {
+  if (!contas.length) return null
+  const total     = contas.reduce((s, c) => s + parseFloat(c.lucro_ciclo || 0), 0)
+  const hoje      = contas.reduce((s, c) => s + parseFloat(c.lucro_hoje || 0), 0)
+  const capital   = contas.reduce((s, c) => s + parseFloat(c.capital_disponivel || 0), 0)
+  const metaTotal = contas.reduce((s, c) => s + parseFloat(c.meta_mensal || 0), 0)
+  const roi       = capital > 0 ? (total / capital * 100) : 0
+  const metaPct   = metaTotal > 0 ? Math.min(100, (total / metaTotal) * 100) : 0
+
+  const items = [
+    { lbl: 'Capital Total',    val: capital > 0 ? R(capital) : '—',       col: 'var(--txt)' },
+    { lbl: 'Resultado Ciclo',  val: R(total),  col: total >= 0 ? 'var(--green)' : 'var(--red)' },
+    { lbl: 'Resultado Hoje',   val: R(hoje),   col: hoje  >= 0 ? 'var(--green)' : 'var(--red)' },
+    { lbl: 'ROI',              val: capital > 0 ? `${roi >= 0 ? '+' : ''}${roi.toFixed(2)}%` : '—', col: roi >= 0 ? 'var(--green)' : 'var(--red)' },
+  ]
+
+  return (
+    <div style={{ marginBottom:'18px' }}>
+      <div style={{ fontSize:'10px', fontWeight:700, letterSpacing:'3px', textTransform:'uppercase', color:'var(--txt3)', marginBottom:'10px', display:'flex', alignItems:'center', gap:'8px' }}>
+        Consolidado — todas as contas <div style={{ flex:1, height:'1px', background:'var(--border)' }} />
+      </div>
+      <div style={{ display:'flex', gap:'10px', flexWrap:'wrap', marginBottom:'10px' }}>
+        {items.map(({ lbl, val, col }) => (
+          <div key={lbl} style={{ background:'var(--bg2)', border:'1px solid var(--border)', borderRadius:'10px', padding:'12px 18px', flex:1, minWidth:'130px' }}>
+            <div style={{ fontSize:'9px', color:'var(--txt3)', textTransform:'uppercase', letterSpacing:'1px', marginBottom:'4px' }}>{lbl}</div>
+            <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:'22px', fontWeight:700, color:col, lineHeight:1 }}>{val}</div>
+          </div>
+        ))}
+      </div>
+      {metaTotal > 0 && (
+        <div style={{ background:'var(--bg2)', border:'1px solid var(--border)', borderRadius:'10px', padding:'12px 18px' }}>
+          <div style={{ display:'flex', justifyContent:'space-between', fontSize:'11px', color:'var(--txt3)', marginBottom:'6px' }}>
+            <span>Meta mensal consolidada: {R(metaTotal)}</span>
+            <span style={{ fontFamily:"'JetBrains Mono',monospace", color: metaPct >= 100 ? 'var(--green)' : 'var(--gold)' }}>{metaPct.toFixed(1)}%</span>
+          </div>
+          <div style={{ height:'4px', background:'var(--border)', borderRadius:'2px' }}>
+            <div style={{ width:`${metaPct}%`, height:'100%', borderRadius:'2px', background: metaPct >= 100 ? 'var(--green)' : 'linear-gradient(90deg,var(--gold),var(--gold2))', transition:'width .5s' }} />
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Seção MERCADO ───────────────────────────────────────────────────────────
 function MercadoSection({ contas, selConta }) {
   const cal = calcCalendario()
@@ -592,17 +727,33 @@ export default function Dashboard() {
           </div>
         ) : (
           <>
-            <div style={{ fontSize:'10px', fontWeight:700, letterSpacing:'3px', textTransform:'uppercase', color:'var(--txt3)', marginBottom:'10px', display:'flex', alignItems:'center', gap:'8px' }}>
-              Contas <div style={{ flex:1, height:'1px', background:'var(--border)' }} />
-            </div>
-            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))', gap:'12px', marginBottom:'18px' }}>
+            {/* Seletor de contas */}
+            <div style={{ display:'flex', gap:'6px', marginBottom:'14px', flexWrap:'wrap' }}>
+              <button onClick={() => setSelId(null)} style={{ padding:'6px 14px', borderRadius:'7px', fontSize:'12px', fontWeight:600, border:'1px solid var(--border2)', cursor:'pointer', background: selId === null ? 'var(--gold-bg)' : 'var(--bg2)', color: selId === null ? 'var(--gold)' : 'var(--txt3)', borderColor: selId === null ? 'var(--gold-bd)' : 'var(--border2)' }}>
+                Todas ({contas.length})
+              </button>
               {contas.map(c => (
-                <ContaCard key={c.id} c={c} selected={selId===c.id} onClick={() => setSelId(c.id)} />
+                <button key={c.id} onClick={() => setSelId(c.id)} style={{ padding:'6px 14px', borderRadius:'7px', fontSize:'12px', fontWeight:600, border:'1px solid var(--border2)', cursor:'pointer', background: selId === c.id ? 'var(--bg3)' : 'var(--bg2)', color: selId === c.id ? 'var(--txt)' : 'var(--txt3)', borderColor: selId === c.id ? 'var(--gold-bd)' : 'var(--border2)' }}>
+                  {c.nome}
+                </button>
               ))}
             </div>
 
+            {/* Consolidado (quando "Todas" selecionado) */}
+            {selId === null && <ConsolidadoSection contas={contas} />}
+
+            {/* Cards de conta */}
+            {selId !== null && (
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))', gap:'12px', marginBottom:'18px' }}>
+                <ContaCard c={contas.find(x => x.id === selId)} selected onClick={() => {}} />
+              </div>
+            )}
+
+            {/* Calculadora (apenas com conta selecionada) */}
+            <CalculadoraSection contas={contas} selConta={selId} />
+
             {/* Mercado */}
-            <MercadoSection contas={contas} selConta={selId} />
+            {selId !== null && <MercadoSection contas={contas} selConta={selId} />}
 
             {/* Painéis inferiores */}
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'14px' }}>

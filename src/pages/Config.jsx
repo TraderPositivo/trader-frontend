@@ -41,10 +41,14 @@ export default function Config() {
     setTab('conta')
     setCkItems([])
     setForm(c ? {
-      id: c.id, nome: c.nome, meta_diaria: c.meta_diaria, stop_diario: c.stop_diario,
-      meta_mensal: c.meta_mensal, stop_mensal: c.stop_mensal, operar_ativo: !!c.operar_ativo,
+      id: c.id, nome: c.nome,
+      meta_diaria: c.meta_diaria, stop_diario: c.stop_diario,
+      meta_mensal: c.meta_mensal, stop_mensal: c.stop_mensal,
       loss_limit_ciclo: c.loss_limit_ciclo, custo_renovacao: c.custo_renovacao,
-    } : { operar_ativo: false })
+      capital_disponivel: c.capital_disponivel || '', risco_pct: c.risco_pct || 1,
+      instrumento: c.instrumento || 'WIN', tipo_conta: c.tipo_conta || 'pessoal',
+      stop_pts_win: c.stop_pts_win || 200, stop_pts_wdo: c.stop_pts_wdo || 100,
+    } : { instrumento: 'WIN', tipo_conta: 'pessoal', risco_pct: 1, stop_pts_win: 200, stop_pts_wdo: 100 })
     setModal(true)
   }
 
@@ -249,19 +253,35 @@ export default function Config() {
                     <div><label style={lbl}>Loss Limit Ciclo (R$)</label><input style={inp} type="number" value={form.loss_limit_ciclo||''} onChange={f('loss_limit_ciclo')} /></div>
                     <div><label style={lbl}>Custo Renovação (R$)</label><input style={inp} type="number" value={form.custo_renovacao||''} onChange={f('custo_renovacao')} /></div>
                   </div>
-                  <div style={{ display:'flex', alignItems:'center', gap:'10px', padding:'12px 14px', background:'var(--bg3)', borderRadius:'8px', border:'1px solid var(--border)' }}>
-                    <label style={{ display:'flex', alignItems:'center', gap:'10px', cursor:'pointer', flex:1 }}>
-                      <div onClick={() => setForm(p => ({ ...p, operar_ativo: !p.operar_ativo }))} style={{
-                        width:'42px', height:'22px', borderRadius:'11px', position:'relative', cursor:'pointer', transition:'.25s',
-                        background: form.operar_ativo ? 'var(--green)' : 'var(--border2)',
-                      }}>
-                        <div style={{ position:'absolute', top:'3px', left: form.operar_ativo ? '22px' : '3px', width:'16px', height:'16px', borderRadius:'50%', background:'#fff', transition:'.25s' }} />
+
+                  {/* Bloco Empresa */}
+                  <div style={{ borderTop:'1px solid var(--border)', paddingTop:'14px' }}>
+                    <div style={{ fontSize:'10px', fontWeight:700, letterSpacing:'2px', color:'var(--txt3)', textTransform:'uppercase', marginBottom:'12px' }}>Gestão de Capital</div>
+                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px' }}>
+                      <div><label style={lbl}>Capital Disponível (R$)</label><input style={inp} type="number" value={form.capital_disponivel||''} onChange={f('capital_disponivel')} placeholder="ex: 5000" /></div>
+                      <div><label style={lbl}>Risco por Operação (%)</label><input style={inp} type="number" step="0.1" value={form.risco_pct||''} onChange={f('risco_pct')} placeholder="ex: 1" /></div>
+                      <div>
+                        <label style={lbl}>Instrumento</label>
+                        <select style={inp} value={form.instrumento||'WIN'} onChange={f('instrumento')}>
+                          <option value="WIN">WIN — Mini Índice</option>
+                          <option value="WDO">WDO — Mini Dólar</option>
+                          <option value="AMBOS">WIN + WDO</option>
+                        </select>
                       </div>
                       <div>
-                        <div style={{ fontSize:'13px', fontWeight:700 }}>Ativar controle de operações</div>
-                        <div style={{ fontSize:'11px', color:'var(--txt3)', marginTop:'2px' }}>Habilita semáforo, calculadora e checklist na aba Operar</div>
+                        <label style={lbl}>Tipo de Conta</label>
+                        <select style={inp} value={form.tipo_conta||'pessoal'} onChange={f('tipo_conta')}>
+                          <option value="pessoal">Pessoal</option>
+                          <option value="mesa">Mesa Proprietária</option>
+                        </select>
                       </div>
-                    </label>
+                      {(form.instrumento === 'WIN' || form.instrumento === 'AMBOS') && (
+                        <div><label style={lbl}>Stop WIN (pontos)</label><input style={inp} type="number" value={form.stop_pts_win||''} onChange={f('stop_pts_win')} placeholder="200" /></div>
+                      )}
+                      {(form.instrumento === 'WDO' || form.instrumento === 'AMBOS') && (
+                        <div><label style={lbl}>Stop WDO (pontos)</label><input style={inp} type="number" value={form.stop_pts_wdo||''} onChange={f('stop_pts_wdo')} placeholder="100" /></div>
+                      )}
+                    </div>
                   </div>
                   {msg && <p style={{ color:'var(--red)', fontSize:'13px' }}>{msg}</p>}
                   <button onClick={salvar} style={{ width:'100%', padding:'12px', background:'linear-gradient(135deg,var(--gold),var(--gold2))', color:'#0c0c0e', border:'none', borderRadius:'8px', fontSize:'14px', fontWeight:800, cursor:'pointer' }}>
