@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { api } from '../lib/api'
 
@@ -11,6 +11,7 @@ export default function Login() {
   const [serverOk, setServerOk] = useState(null) // null=verificando, true=ok, false=acordando
   const { login } = useAuth()
   const navigate  = useNavigate()
+  const location  = useLocation()
 
   useEffect(() => {
     // Acorda o backend Render antes do usuário tentar logar
@@ -27,7 +28,7 @@ export default function Login() {
     try {
       const data = await api.post('auth', { action: 'login', email, senha })
       login(data.token, data.usuario)
-      navigate(data.usuario.role === 'admin' ? '/admin' : '/')
+      navigate(location.state?.from || (data.usuario.role === 'admin' ? '/admin' : '/'))
     } catch (err) {
       setErro(err.message)
     } finally {

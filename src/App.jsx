@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
@@ -7,11 +7,14 @@ import Performance from './pages/Performance'
 import Operar from './pages/Operar'
 import Lancar from './pages/Lancar'
 import Admin from './pages/Admin'
+import Aluno from './pages/Aluno'
 
 function Private({ children }) {
   const { user, loading } = useAuth()
+  const location = useLocation()
   if (loading) return null
-  return user ? children : <Navigate to="/login" replace />
+  // guarda a página pedida para o login voltar até ela
+  return user ? children : <Navigate to="/login" replace state={{ from: location.pathname }} />
 }
 
 function AdminOnly({ children }) {
@@ -29,6 +32,7 @@ function AppRoutes() {
       <Route path="/config"      element={<Private><Config /></Private>} />
       <Route path="/performance" element={<Private><Performance /></Private>} />
       <Route path="/lancar"      element={<Private><Lancar /></Private>} />
+      <Route path="/aluno"       element={<Private><Aluno /></Private>} />
       <Route path="/admin"       element={<AdminOnly><Admin /></AdminOnly>} />
       <Route path="*"            element={<Navigate to="/" replace />} />
     </Routes>
