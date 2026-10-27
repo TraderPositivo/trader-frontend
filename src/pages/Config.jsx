@@ -316,74 +316,121 @@ export default function Config() {
 
               {/* Tab: Conta */}
               {tab === 'conta' && (
-                <div key={form.id || 'new'} style={{ display:'flex', flexDirection:'column', gap:'14px' }}>
+                <div key={form.id || 'new'} style={{ display:'flex', flexDirection:'column', gap:'18px' }}>
 
-                  {/* Tipo de conta — primeiro campo */}
+                  {/* Tipo de conta */}
                   <div>
                     <label style={lbl}>Tipo de Conta</label>
-                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px' }}>
+                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px', marginBottom:'8px' }}>
                       {[
-                        { val:'pessoal', icon:'👤', label:'Pessoal', cor:'#5ba4f5', corBg:'rgba(91,164,245,.08)', corBd:'rgba(91,164,245,.3)' },
-                        { val:'mesa',    icon:'🏢', label:'Mesa Proprietária', cor:'var(--yellow)', corBg:'rgba(212,168,67,.08)', corBd:'rgba(212,168,67,.3)' },
-                      ].map(({ val, icon, label, cor, corBg, corBd }) => {
+                        { val:'pessoal', icon:'👤', label:'Pessoal', desc:'Capital próprio, sem regras externas.', cor:'#5ba4f5', corBg:'rgba(91,164,245,.08)', corBd:'rgba(91,164,245,.3)' },
+                        { val:'mesa',    icon:'🏢', label:'Mesa Proprietária', desc:'Capital da mesa com ciclo e drawdown.', cor:'var(--yellow)', corBg:'rgba(212,168,67,.08)', corBd:'rgba(212,168,67,.3)' },
+                      ].map(({ val, icon, label, desc, cor, corBg, corBd }) => {
                         const sel = (form.tipo_conta || 'pessoal') === val
                         return (
                           <button key={val} type="button" onClick={() => setForm(p => ({ ...p, tipo_conta: val }))} style={{
                             padding:'10px 12px', borderRadius:'8px', border:`1px solid ${sel ? corBd : 'var(--border2)'}`,
                             background: sel ? corBg : 'var(--bg3)', color: sel ? cor : 'var(--txt3)',
-                            fontFamily:'inherit', fontSize:'12px', fontWeight:700, cursor:'pointer', display:'flex', alignItems:'center', gap:'7px', transition:'.15s',
+                            fontFamily:'inherit', cursor:'pointer', display:'flex', flexDirection:'column', alignItems:'flex-start', gap:'2px', transition:'.15s', textAlign:'left',
                           }}>
-                            <span>{icon}</span>{label}
+                            <span style={{ fontSize:'12px', fontWeight:700 }}>{icon} {label}</span>
+                            <span style={{ fontSize:'10px', color:'var(--txt3)', fontWeight:400 }}>{desc}</span>
                           </button>
                         )
                       })}
                     </div>
-                    {(form.tipo_conta || 'pessoal') === 'mesa' && (
-                      <div style={{ marginTop:'8px', padding:'8px 11px', borderRadius:'6px', background:'rgba(212,168,67,.07)', border:'1px solid rgba(212,168,67,.2)', fontSize:'11px', color:'var(--txt3)', lineHeight:1.6 }}>
-                        Mesa: preencha <strong style={{ color:'var(--yellow)' }}>Loss Limit</strong> e <strong style={{ color:'var(--yellow)' }}>Custo de Renovação</strong> conforme as regras da sua mesa.
+                  </div>
+
+                  {/* Nome */}
+                  <div>
+                    <label style={lbl}>Nome da Conta</label>
+                    <input style={inp} value={form.nome||''} onChange={f('nome')} placeholder="ex: WIN Pessoal, Mesa XP..." />
+                    <p style={{ margin:'4px 0 0', fontSize:'11px', color:'var(--txt3)' }}>Um nome para identificar esta conta no sistema.</p>
+                  </div>
+
+                  {/* Metas e Stops */}
+                  <div>
+                    <div style={{ fontSize:'10px', fontWeight:700, letterSpacing:'2px', color:'var(--txt3)', textTransform:'uppercase', marginBottom:'10px' }}>Limites Diários e Mensais</div>
+                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px' }}>
+                      <div>
+                        <label style={lbl}>Meta Diária</label>
+                        <CurrencyInput style={inp} value={form.meta_diaria||''} onChange={fc('meta_diaria')} />
+                        <p style={{ margin:'4px 0 0', fontSize:'11px', color:'var(--txt3)' }}>Quanto quer ganhar por dia. Ao bater, o sistema avisa para encerrar.</p>
                       </div>
-                    )}
+                      <div>
+                        <label style={{ ...lbl, color:'var(--red)' }}>Stop Diário</label>
+                        <CurrencyInput style={inp} value={form.stop_diario||''} onChange={fc('stop_diario')} />
+                        <p style={{ margin:'4px 0 0', fontSize:'11px', color:'var(--txt3)' }}>Perda máxima no dia. Ao atingir, PARE de operar.</p>
+                      </div>
+                      <div>
+                        <label style={lbl}>Meta Mensal</label>
+                        <CurrencyInput style={inp} value={form.meta_mensal||''} onChange={fc('meta_mensal')} />
+                        <p style={{ margin:'4px 0 0', fontSize:'11px', color:'var(--txt3)' }}>Objetivo de lucro no mês. Usado na barra de progresso.</p>
+                      </div>
+                      <div>
+                        <label style={{ ...lbl, color:'var(--red)' }}>Stop Mensal</label>
+                        <CurrencyInput style={inp} value={form.stop_mensal||''} onChange={fc('stop_mensal')} />
+                        <p style={{ margin:'4px 0 0', fontSize:'11px', color:'var(--txt3)' }}>Perda máxima no mês. Ao atingir, encerre o mês.</p>
+                      </div>
+                    </div>
                   </div>
 
-                  <div><label style={lbl}>Nome</label><input style={inp} value={form.nome||''} onChange={f('nome')} placeholder="ex: Conta A" /></div>
-
-                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px' }}>
-                    <div><label style={lbl}>Meta Diária</label><CurrencyInput style={inp} value={form.meta_diaria||''} onChange={fc('meta_diaria')} /></div>
-                    <div><label style={lbl}>Stop Diário</label><CurrencyInput style={inp} value={form.stop_diario||''} onChange={fc('stop_diario')} /></div>
-                    <div><label style={lbl}>Meta Mensal</label><CurrencyInput style={inp} value={form.meta_mensal||''} onChange={fc('meta_mensal')} /></div>
-                    <div><label style={lbl}>Stop Mensal</label><CurrencyInput style={inp} value={form.stop_mensal||''} onChange={fc('stop_mensal')} /></div>
-                  </div>
-
-                  {/* Loss Limit e Custo Renovação — só para Mesa */}
+                  {/* Regras da Mesa — só aparece quando mesa */}
                   {(form.tipo_conta || 'pessoal') === 'mesa' && (
-                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px', padding:'14px', borderRadius:'10px', background:'rgba(212,168,67,.06)', border:'1px solid rgba(212,168,67,.2)' }}>
-                      <div style={{ gridColumn:'1/-1', fontSize:'10px', fontWeight:700, letterSpacing:'2px', color:'var(--yellow)', textTransform:'uppercase', marginBottom:'2px' }}>
-                        Regras da Mesa
+                    <div style={{ padding:'14px', borderRadius:'10px', background:'rgba(212,168,67,.06)', border:'1px solid rgba(212,168,67,.2)' }}>
+                      <div style={{ fontSize:'10px', fontWeight:700, letterSpacing:'2px', color:'var(--yellow)', textTransform:'uppercase', marginBottom:'12px' }}>Regras da Mesa</div>
+                      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px' }}>
+                        <div>
+                          <label style={{ ...lbl, color:'var(--yellow)' }}>Loss Limit do Ciclo</label>
+                          <CurrencyInput style={inp} value={form.loss_limit_ciclo||''} onChange={fc('loss_limit_ciclo')} />
+                          <p style={{ margin:'4px 0 0', fontSize:'11px', color:'var(--txt3)' }}>Limite total de perda no ciclo definido pela mesa. Ao atingir, o ciclo encerra e é preciso renovar.</p>
+                        </div>
+                        <div>
+                          <label style={{ ...lbl, color:'var(--yellow)' }}>Custo de Renovação</label>
+                          <CurrencyInput style={inp} value={form.custo_renovacao||''} onChange={fc('custo_renovacao')} />
+                          <p style={{ margin:'4px 0 0', fontSize:'11px', color:'var(--txt3)' }}>Valor pago à mesa para iniciar um novo ciclo. Usado no cálculo de ROI real.</p>
+                        </div>
                       </div>
-                      <div><label style={{ ...lbl, color:'var(--yellow)' }}>Loss Limit do Ciclo ★</label><CurrencyInput style={inp} value={form.loss_limit_ciclo||''} onChange={fc('loss_limit_ciclo')} /></div>
-                      <div><label style={{ ...lbl, color:'var(--yellow)' }}>Custo de Renovação ★</label><CurrencyInput style={inp} value={form.custo_renovacao||''} onChange={fc('custo_renovacao')} /></div>
                     </div>
                   )}
 
                   {/* Gestão de Capital */}
-                  <div style={{ borderTop:'1px solid var(--border)', paddingTop:'14px' }}>
+                  <div style={{ borderTop:'1px solid var(--border)', paddingTop:'16px' }}>
                     <div style={{ fontSize:'10px', fontWeight:700, letterSpacing:'2px', color:'var(--txt3)', textTransform:'uppercase', marginBottom:'12px' }}>Gestão de Capital</div>
                     <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px' }}>
-                      <div><label style={lbl}>Capital Disponível</label><CurrencyInput style={inp} value={form.capital_disponivel||''} onChange={fc('capital_disponivel')} placeholder="0,00" /></div>
-                      <div><label style={lbl}>Risco por Operação (%)</label><input style={inp} type="number" step="0.1" value={form.risco_pct||''} onChange={f('risco_pct')} placeholder="ex: 1" /></div>
                       <div>
+                        <label style={lbl}>Capital Disponível</label>
+                        <CurrencyInput style={inp} value={form.capital_disponivel||''} onChange={fc('capital_disponivel')} placeholder="0,00" />
+                        <p style={{ margin:'4px 0 0', fontSize:'11px', color:'var(--txt3)' }}>Total na conta de trading. Base para calcular o risco por operação.</p>
+                      </div>
+                      <div>
+                        <label style={lbl}>Risco por Operação (%)</label>
+                        <input style={inp} type="number" step="0.1" value={form.risco_pct||''} onChange={f('risco_pct')} placeholder="1" />
+                        <p style={{ margin:'4px 0 0', fontSize:'11px', color:'var(--txt3)' }}>
+                          % do capital que você aceita perder por trade.{form.capital_disponivel && form.risco_pct ? <> Ex: <strong style={{ color:'var(--gold)' }}>R$ {((parseFloat(form.capital_disponivel)||0) * (parseFloat(form.risco_pct)||0) / 100).toLocaleString('pt-BR',{minimumFractionDigits:2})}</strong> por operação.</> : ' Recomendado: 1%.'}
+                        </p>
+                      </div>
+                      <div style={{ gridColumn:'1/-1' }}>
                         <label style={lbl}>Instrumento</label>
                         <select style={inp} value={form.instrumento||'WIN'} onChange={f('instrumento')}>
-                          <option value="WIN">WIN — Mini Índice</option>
-                          <option value="WDO">WDO — Mini Dólar</option>
-                          <option value="AMBOS">WIN + WDO</option>
+                          <option value="WIN">WIN — Mini Índice (R$ 0,20/ponto)</option>
+                          <option value="WDO">WDO — Mini Dólar (R$ 10,00/ponto)</option>
+                          <option value="AMBOS">WIN + WDO (opera os dois)</option>
                         </select>
                       </div>
                       {(form.instrumento === 'WIN' || form.instrumento === 'AMBOS') && (
-                        <div><label style={lbl}>Stop WIN (pontos)</label><input style={inp} type="number" value={form.stop_pts_win||''} onChange={f('stop_pts_win')} placeholder="200" /></div>
+                        <div>
+                          <label style={lbl}>Stop padrão WIN (pontos)</label>
+                          <input style={inp} type="number" value={form.stop_pts_win||''} onChange={f('stop_pts_win')} placeholder="200" />
+                          <p style={{ margin:'4px 0 0', fontSize:'11px', color:'var(--txt3)' }}>Distância típica do seu stop loss no gráfico. Usado para calcular quantos contratos operar. Ex: 200pts = R$ 40/ct.</p>
+                        </div>
                       )}
                       {(form.instrumento === 'WDO' || form.instrumento === 'AMBOS') && (
-                        <div><label style={lbl}>Stop WDO (pontos)</label><input style={inp} type="number" value={form.stop_pts_wdo||''} onChange={f('stop_pts_wdo')} placeholder="100" /></div>
+                        <div>
+                          <label style={lbl}>Stop padrão WDO (pontos)</label>
+                          <input style={inp} type="number" value={form.stop_pts_wdo||''} onChange={f('stop_pts_wdo')} placeholder="10" />
+                          <p style={{ margin:'4px 0 0', fontSize:'11px', color:'var(--txt3)' }}>Distância típica do seu stop loss no gráfico. Ex: 10pts = R$ 100/ct.</p>
+                        </div>
                       )}
                     </div>
                   </div>
