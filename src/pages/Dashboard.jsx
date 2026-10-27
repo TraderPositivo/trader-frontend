@@ -11,6 +11,15 @@ function R(v) {
 function hojeISO() { return new Date().toISOString().slice(0, 10) }
 function horaAtual() { return new Date().toTimeString().slice(0, 5) }
 
+const B3_FERIADOS = new Set([
+  '2025-01-01','2025-03-03','2025-03-04','2025-04-18','2025-04-21',
+  '2025-05-01','2025-06-19','2025-09-07','2025-10-12','2025-11-02',
+  '2025-11-15','2025-11-20','2025-12-25',
+  '2026-01-01','2026-02-16','2026-02-17','2026-04-03','2026-04-21',
+  '2026-05-01','2026-06-04','2026-07-09','2026-09-07','2026-10-12',
+  '2026-11-02','2026-11-15','2026-11-20','2026-12-25',
+])
+
 function calcCalendario() {
   const now   = new Date()
   const year  = now.getFullYear()
@@ -22,6 +31,7 @@ function calcCalendario() {
     const dow = new Date(year, month, d).getDay()
     if (dow === 0 || dow === 6) continue
     const iso = `${year}-${String(month + 1).padStart(2,'0')}-${String(d).padStart(2,'0')}`
+    if (B3_FERIADOS.has(iso)) continue
     all.push(iso)
     if (iso < today) past.push(iso)
     else remaining.push(iso)
