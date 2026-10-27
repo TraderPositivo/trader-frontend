@@ -547,7 +547,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [erro,    setErro]    = useState('')
   const [selId,   setSelId]   = useState(null)
-  const [regTab,  setRegTab]  = useState('manual')
+  const [regTab,  setRegTab]  = useState('csv')
 
   const load = useCallback(async () => {
     setLoading(true); setErro('')
@@ -606,7 +606,7 @@ export default function Dashboard() {
 
             {/* Painéis inferiores */}
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'14px' }}>
-              <Panel title="📝 Registrar Operação" tabs={[{id:'manual',label:'Manual'},{id:'csv',label:'📂 Importar CSV'}]} activeTab={regTab} onTab={setRegTab}>
+              <Panel title="📝 Registrar Operação" tabs={[{id:'csv',label:'📂 Importar CSV'},{id:'manual',label:'✏️ Manual'}]} activeTab={regTab} onTab={setRegTab}>
                 {regTab === 'manual' ? (
                   <RegisterPanel contas={contas} selConta={selId} onSuccess={load} />
                 ) : (

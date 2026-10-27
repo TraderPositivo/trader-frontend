@@ -9,7 +9,7 @@ function R(v) {
 const inp = { background:'var(--bg3)', border:'1px solid var(--border2)', color:'var(--txt)', padding:'9px 11px', borderRadius:'7px', fontSize:'13px', outline:'none', width:'100%', fontFamily:'inherit' }
 const lbl = { fontSize:'11px', color:'var(--txt3)', textTransform:'uppercase', letterSpacing:'.5px', display:'block', marginBottom:'4px' }
 
-const API_URL = (path) => `/.netlify/functions/${path}`
+const API_URL = (path) => `${(import.meta.env.VITE_API_URL || 'https://trader-backend-2v2l.onrender.com')}/api/${path}`
 
 export default function Config() {
   const [contas,    setContas]    = useState([])
@@ -26,7 +26,7 @@ export default function Config() {
   const [ckNovoC,   setCkNovoC]   = useState('')
   const [ckNovoV,   setCkNovoV]   = useState('')
 
-  const token = localStorage.getItem('token')
+  const token = localStorage.getItem('ts_token')
   const headers = { Authorization: `Bearer ${token}` }
 
   async function load() {
