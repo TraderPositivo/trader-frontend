@@ -1,0 +1,5 @@
+node_modules
+netlify/functions/node_modules
+dist
+.env
+.netlify
