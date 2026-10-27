@@ -616,7 +616,7 @@ function RegisterPanel({ contas, selConta, onSuccess }) {
 }
 
 // ─── Painel Operações ─────────────────────────────────────────────────────────
-function OpsPanel({ contas, selConta }) {
+function OpsPanel({ contas, selConta, compact }) {
   const [tab,  setTab]  = useState('hoje')
   const [cid,  setCid]  = useState(selConta || '')
   const [ops,  setOps]  = useState([])
@@ -659,25 +659,28 @@ function OpsPanel({ contas, selConta }) {
   )
 
   return (
-    <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
-      <div style={{ display:'flex', alignItems:'center', gap:'6px' }}>
-        <span style={{ fontSize:'9px', color:'var(--txt3)', textTransform:'uppercase', letterSpacing:'1px' }}>Conta:</span>
-        <select style={{ padding:'5px 8px', borderRadius:'5px', fontSize:'11px', background:'var(--bg3)', border:'1px solid var(--border2)', color:'var(--txt)', outline:'none' }}
-          value={cid} onChange={e => setCid(e.target.value)}>
-          {contas.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
-        </select>
-        {tab === 'hist' && (
-          <input type="month" value={mes} onChange={e => setMes(e.target.value)}
-            style={{ padding:'5px 8px', borderRadius:'5px', fontSize:'11px', background:'var(--bg3)', border:'1px solid var(--border2)', color:'var(--txt)', outline:'none' }} />
-        )}
-      </div>
+    <div style={{ display:'flex', flexDirection:'column', gap:'10px', padding: compact ? '0' : '0' }}>
+      {!compact && (
+        <>
+          <div style={{ display:'flex', alignItems:'center', gap:'6px' }}>
+            <span style={{ fontSize:'9px', color:'var(--txt3)', textTransform:'uppercase', letterSpacing:'1px' }}>Conta:</span>
+            <select style={{ padding:'5px 8px', borderRadius:'5px', fontSize:'11px', background:'var(--bg3)', border:'1px solid var(--border2)', color:'var(--txt)', outline:'none' }}
+              value={cid} onChange={e => setCid(e.target.value)}>
+              {contas.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+            </select>
+            {tab === 'hist' && (
+              <input type="month" value={mes} onChange={e => setMes(e.target.value)}
+                style={{ padding:'5px 8px', borderRadius:'5px', fontSize:'11px', background:'var(--bg3)', border:'1px solid var(--border2)', color:'var(--txt)', outline:'none' }} />
+            )}
+          </div>
+          <div style={{ display:'flex', gap:'3px' }}>
+            <TabBtn id="hoje" label="Hoje" />
+            <TabBtn id="hist" label="Histórico" />
+          </div>
+        </>
+      )}
 
-      <div style={{ display:'flex', gap:'3px' }}>
-        <TabBtn id="hoje" label="Hoje" />
-        <TabBtn id="hist" label="Histórico" />
-      </div>
-
-      <div style={{ maxHeight:'260px', overflowY:'auto' }}>
+      <div style={{ maxHeight: compact ? '220px' : '260px', overflowY:'auto' }}>
         {load ? (
           <p style={{ textAlign:'center', padding:'20px', fontSize:'12px', color:'var(--txt3)' }}>Carregando…</p>
         ) : ops.length === 0 ? (
@@ -746,6 +749,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [erro,    setErro]    = useState('')
   const [selId,   setSelId]   = useState(null)
+  const [fabOpen, setFabOpen] = useState(false)
   const [regTab,  setRegTab]  = useState('csv')
 
   const load = useCallback(async () => {
@@ -858,23 +862,68 @@ export default function Dashboard() {
             {/* Mercado */}
             {selId !== null && <MercadoSection contas={contas} selConta={selId} />}
 
-            {/* Painéis inferiores */}
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'14px' }}>
-              <Panel title="📝 Registrar Operação" tabs={[{id:'csv',label:'📂 Importar CSV'},{id:'manual',label:'✏️ Manual'}]} activeTab={regTab} onTab={setRegTab}>
-                {regTab === 'manual' ? (
-                  <RegisterPanel contas={contas} selConta={selId} onSuccess={load} />
-                ) : (
-                  <CsvImportPanel contas={contas} selConta={selId} onSuccess={load} />
-                )}
-              </Panel>
-
-              <Panel title="Operações">
-                <OpsPanel contas={contas} selConta={selId} />
-              </Panel>
-            </div>
+            {/* Operações de hoje — inline */}
+            {selId !== null && (
+              <div style={{ background:'var(--bg2)', border:'1px solid var(--border)', borderRadius:'12px', overflow:'hidden' }}>
+                <div style={{ padding:'12px 16px', borderBottom:'1px solid var(--border)', fontSize:'12px', fontWeight:700, color:'var(--txt2)' }}>
+                  Operações de hoje
+                </div>
+                <div style={{ padding:'4px 0' }}>
+                  <OpsPanel contas={contas} selConta={selId} compact />
+                </div>
+              </div>
+            )}
           </>
         )}
       </main>
+
+      {/* ── FAB lançar operação ───────────────────────────────────────── */}
+      {contas.length > 0 && (
+        <button
+          onClick={() => setFabOpen(true)}
+          style={{
+            position:'fixed', bottom:'28px', right:'28px', zIndex:100,
+            width:'56px', height:'56px', borderRadius:'50%', border:'none',
+            background:'linear-gradient(135deg,#c9a84c,#e8c97a)',
+            color:'#0c0c0e', fontSize:'26px', fontWeight:900,
+            boxShadow:'0 4px 20px rgba(201,168,76,.45)',
+            cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center',
+            transition:'transform .15s, box-shadow .15s',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.transform='scale(1.1)'; e.currentTarget.style.boxShadow='0 6px 28px rgba(201,168,76,.6)' }}
+          onMouseLeave={e => { e.currentTarget.style.transform='scale(1)';   e.currentTarget.style.boxShadow='0 4px 20px rgba(201,168,76,.45)' }}
+          title="Lançar operação"
+        >+</button>
+      )}
+
+      {/* ── Modal lançar ─────────────────────────────────────────────── */}
+      {fabOpen && (
+        <div
+          onClick={e => e.target === e.currentTarget && setFabOpen(false)}
+          style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.72)', zIndex:200, display:'flex', alignItems:'flex-end', justifyContent:'flex-end', backdropFilter:'blur(4px)', padding:'0 28px 100px' }}
+        >
+          <div style={{ width:'100%', maxWidth:'440px', background:'var(--bg2)', border:'1px solid var(--border2)', borderRadius:'16px', overflow:'hidden', boxShadow:'0 8px 40px rgba(0,0,0,.5)' }}>
+            <div style={{ padding:'14px 18px', borderBottom:'1px solid var(--border)', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+              <div style={{ display:'flex', gap:'4px' }}>
+                {[{id:'csv',label:'📂 CSV Profit'},{id:'manual',label:'✏️ Manual'}].map(({ id, label }) => (
+                  <button key={id} onClick={() => setRegTab(id)} style={{
+                    padding:'5px 12px', borderRadius:'6px', fontSize:'12px', fontWeight:700, border:'none', cursor:'pointer',
+                    background: regTab===id ? 'var(--gold-bg)' : 'transparent',
+                    color: regTab===id ? 'var(--gold)' : 'var(--txt3)',
+                  }}>{label}</button>
+                ))}
+              </div>
+              <button onClick={() => setFabOpen(false)} style={{ background:'none', border:'none', color:'var(--txt3)', fontSize:'18px', cursor:'pointer', lineHeight:1 }}>✕</button>
+            </div>
+            <div style={{ padding:'18px' }}>
+              {regTab === 'manual'
+                ? <RegisterPanel contas={contas} selConta={selId} onSuccess={() => { load(); setFabOpen(false) }} />
+                : <CsvImportPanel contas={contas} selConta={selId} onSuccess={() => { load(); setFabOpen(false) }} />
+              }
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }
