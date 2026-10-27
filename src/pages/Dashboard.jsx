@@ -62,6 +62,48 @@ function Badge({ status }) {
   return <span style={{ fontSize:'10px', fontWeight:700, padding:'3px 9px', borderRadius:'4px', background:c.bg, border:`1px solid ${c.bd}`, color:c.cor, fontFamily:"'JetBrains Mono',monospace", whiteSpace:'nowrap' }}>{c.label}</span>
 }
 
+// ─── Helpers B3 ──────────────────────────────────────────────────────────────
+const _ML = ['F','G','H','J','K','M','N','Q','U','V','X','Z']
+function _3aQuarta(y, m) {
+  let n = 0
+  for (let d = 1; d <= 31; d++) {
+    const dt = new Date(y, m, d)
+    if (dt.getMonth() !== m) break
+    if (dt.getDay() === 3 && ++n === 3) return dt
+  }
+}
+function _1oDiaUtil(y, m) {
+  for (let d = 1; d <= 5; d++) {
+    const dt = new Date(y, m, d)
+    if (dt.getDay() !== 0 && dt.getDay() !== 6) return dt
+  }
+}
+function contratoVigente(instrumento) {
+  const hoje = new Date()
+  function nextWIN() {
+    let y = hoje.getFullYear(), m = hoje.getMonth()
+    const pares = [1,3,5,7,9,11]
+    for (let i = 0; i < 14; i++) {
+      const pm = pares.find(p => p >= m)
+      const vm = pm ?? pares[0], vy = pm != null ? y : y + 1
+      const v = _3aQuarta(vy, vm)
+      if (v > hoje) return `WIN${_ML[vm]}${String(vy).slice(2)}`
+      m = vm + 2; if (m > 11) { m -= 12; y++ }
+    }
+  }
+  function nextWDO() {
+    let y = hoje.getFullYear(), m = hoje.getMonth()
+    for (let i = 0; i < 14; i++) {
+      const v = _1oDiaUtil(y, m)
+      if (v > hoje) return `WDO${_ML[m]}${String(y).slice(2)}`
+      m++; if (m > 11) { m = 0; y++ }
+    }
+  }
+  if (instrumento === 'WIN') return [nextWIN()]
+  if (instrumento === 'WDO') return [nextWDO()]
+  return [nextWIN(), nextWDO()]
+}
+
 // ─── ContaCard ───────────────────────────────────────────────────────────────
 function ContaCard({ c, selected, onClick }) {
   const stripeColor = c.status_mes === 'STOP_MES' ? 'var(--red)'
@@ -87,8 +129,11 @@ function ContaCard({ c, selected, onClick }) {
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
           <div>
             <div style={{ fontSize: '14px', fontWeight: 700, marginBottom: '3px' }}>{c.nome}</div>
-            <div style={{ display: 'flex', gap: '5px' }}>
+            <div style={{ display: 'flex', gap: '5px', flexWrap:'wrap' }}>
               {c.plataforma && <span style={{ fontSize: '9px', background:'var(--border)', padding:'2px 6px', borderRadius:'3px', color:'var(--txt2)', fontFamily:"'JetBrains Mono',monospace" }}>{c.plataforma}</span>}
+              {contratoVigente(c.instrumento || 'WIN').map(cod => (
+                <span key={cod} style={{ fontSize:'9px', fontFamily:"'JetBrains Mono',monospace", fontWeight:700, padding:'2px 6px', borderRadius:'3px', background: cod.startsWith('WIN') ? 'rgba(76,175,130,.12)' : 'rgba(91,164,245,.12)', color: cod.startsWith('WIN') ? '#4caf82' : '#5b9cf6', border: `1px solid ${cod.startsWith('WIN') ? 'rgba(76,175,130,.25)' : 'rgba(91,164,245,.25)'}` }}>{cod}</span>
+              ))}
             </div>
           </div>
           <Badge status={c.status_dia} />
