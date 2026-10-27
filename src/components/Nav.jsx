@@ -49,20 +49,26 @@ export default function Nav({ janelaBadge }) {
           { to: '/',            label: 'Dashboard' },
           { to: '/operar',      label: '📋 Plano' },
           { to: '/performance', label: 'Performance' },
+          { to: '/lancar',      label: '✏️ Lançar', lancar: true },
           { to: '/config',      label: '⚙ Config' },
           ...(user?.role === 'admin' ? [{ to: '/admin', label: '⚡ Sistema', admin: true }] : []),
-        ].map(({ to, label, go, admin }) => (
+        ].map(({ to, label, go, admin, lancar }) => (
           <NavLink key={to} to={to} end={to === '/'} style={({ isActive }) => ({
             padding: '5px 13px', borderRadius: '6px', fontSize: '12px', fontWeight: 600,
             textDecoration: 'none', transition: 'all .15s',
-            background: go
-              ? (isActive ? 'rgba(0,229,160,.2)' : 'rgba(0,229,160,.08)')
-              : isActive ? (admin ? 'rgba(212,168,67,.1)' : 'var(--gold-bg)') : 'transparent',
-            color: go ? 'var(--green)'
+            background: lancar
+              ? (isActive ? 'rgba(91,164,245,.2)' : 'rgba(91,164,245,.07)')
+              : go
+                ? (isActive ? 'rgba(0,229,160,.2)' : 'rgba(0,229,160,.08)')
+                : isActive ? (admin ? 'rgba(212,168,67,.1)' : 'var(--gold-bg)') : 'transparent',
+            color: lancar ? '#5ba4f5'
+              : go ? 'var(--green)'
               : isActive ? (admin ? 'var(--yellow)' : 'var(--gold)') : (admin ? 'var(--yellow)' : 'var(--txt2)'),
-            border: go
-              ? `1px solid ${isActive ? 'rgba(0,229,160,.4)' : 'rgba(0,229,160,.2)'}`
-              : isActive ? `1px solid ${admin ? 'rgba(212,168,67,.25)' : 'var(--gold-bd)'}` : '1px solid transparent',
+            border: lancar
+              ? `1px solid ${isActive ? 'rgba(91,164,245,.4)' : 'rgba(91,164,245,.2)'}`
+              : go
+                ? `1px solid ${isActive ? 'rgba(0,229,160,.4)' : 'rgba(0,229,160,.2)'}`
+                : isActive ? `1px solid ${admin ? 'rgba(212,168,67,.25)' : 'var(--gold-bd)'}` : '1px solid transparent',
           })}>
             {label}
           </NavLink>

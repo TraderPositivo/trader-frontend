@@ -743,6 +743,66 @@ function Panel({ title, tabs, activeTab, onTab, children }) {
   )
 }
 
+// ─── Mini gráfico sparkline ──────────────────────────────────────────────────
+function SparklineSection({ selConta }) {
+  const [bars, setBars] = useState([])
+
+  useEffect(() => {
+    if (!selConta) return
+    api.get(`operacoes?conta_id=${selConta}`).then(ops => {
+      // agrupa por data, últimos 20 pregões
+      const map = {}
+      ops.forEach(o => {
+        const d = o.data_operacao
+        map[d] = (map[d] || 0) + parseFloat(o.resultado || 0)
+      })
+      const sorted = Object.entries(map).sort((a,b) => a[0].localeCompare(b[0])).slice(-20)
+      setBars(sorted.map(([d, v]) => ({ d, v })))
+    }).catch(() => {})
+  }, [selConta])
+
+  if (bars.length < 2) return null
+
+  const maxAbs = Math.max(...bars.map(b => Math.abs(b.v)), 1)
+  const H = 56, W = 100
+  const barW = W / bars.length - 1.5
+  const total = bars.reduce((s, b) => s + b.v, 0)
+  const wins  = bars.filter(b => b.v > 0).length
+
+  return (
+    <div style={{ background:'var(--bg2)', border:'1px solid var(--border)', borderRadius:'12px', padding:'14px 18px', marginBottom:'18px' }}>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'10px' }}>
+        <span style={{ fontSize:'10px', fontWeight:700, letterSpacing:'2px', textTransform:'uppercase', color:'var(--txt3)' }}>
+          Últimos {bars.length} pregões
+        </span>
+        <div style={{ display:'flex', gap:'14px', fontSize:'11px' }}>
+          <span style={{ color: total >= 0 ? 'var(--green)' : 'var(--red)', fontFamily:"'JetBrains Mono',monospace", fontWeight:700 }}>
+            {total >= 0 ? '+' : ''}R$ {Math.abs(total).toLocaleString('pt-BR',{minimumFractionDigits:2})}
+          </span>
+          <span style={{ color:'var(--txt3)' }}>{wins}/{bars.length} positivos</span>
+          <a href="/performance" style={{ color:'var(--gold)', fontSize:'10px', fontWeight:700, textDecoration:'none' }}>ver detalhes →</a>
+        </div>
+      </div>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width:'100%', height:'60px', overflow:'visible' }} preserveAspectRatio="none">
+        {bars.map((b, i) => {
+          const h = Math.max(1.5, (Math.abs(b.v) / maxAbs) * (H / 2 - 2))
+          const x = i * (W / bars.length) + 0.75
+          const positive = b.v >= 0
+          return (
+            <rect key={b.d}
+              x={x} y={positive ? H/2 - h : H/2}
+              width={barW} height={h}
+              fill={positive ? '#4caf82' : '#e05c6a'}
+              opacity="0.85" rx="0.5"
+            />
+          )
+        })}
+        <line x1="0" y1={H/2} x2={W} y2={H/2} stroke="var(--border2)" strokeWidth="0.5" />
+      </svg>
+    </div>
+  )
+}
+
 // ─── Dashboard principal ──────────────────────────────────────────────────────
 export default function Dashboard() {
   const [contas,  setContas]  = useState([])
@@ -851,13 +911,18 @@ export default function Dashboard() {
 
             {/* Cards de conta */}
             {selId !== null && (
-              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))', gap:'12px', marginBottom:'18px' }}>
-                <ContaCard c={contas.find(x => x.id === selId)} selected onClick={() => {}} />
+              <div style={{ display:'flex', justifyContent:'center', marginBottom:'18px' }}>
+                <div style={{ width:'100%', maxWidth:'420px' }}>
+                  <ContaCard c={contas.find(x => x.id === selId)} selected onClick={() => {}} />
+                </div>
               </div>
             )}
 
             {/* Calculadora (apenas com conta selecionada) */}
             <CalculadoraSection contas={contas} selConta={selId} />
+
+            {/* Sparkline performance */}
+            {selId !== null && <SparklineSection selConta={selId} />}
 
             {/* Mercado */}
             {selId !== null && <MercadoSection contas={contas} selConta={selId} />}
@@ -882,18 +947,19 @@ export default function Dashboard() {
         <button
           onClick={() => setFabOpen(true)}
           style={{
-            position:'fixed', bottom:'28px', right:'28px', zIndex:100,
-            width:'56px', height:'56px', borderRadius:'50%', border:'none',
-            background:'linear-gradient(135deg,#c9a84c,#e8c97a)',
-            color:'#0c0c0e', fontSize:'26px', fontWeight:900,
-            boxShadow:'0 4px 20px rgba(201,168,76,.45)',
-            cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center',
-            transition:'transform .15s, box-shadow .15s',
+            position:'fixed', bottom:'24px', right:'24px', zIndex:100,
+            height:'36px', borderRadius:'18px', border:'1px solid rgba(91,164,245,.3)',
+            background:'rgba(91,164,245,.08)',
+            color:'#5ba4f5', fontSize:'12px', fontWeight:700,
+            padding:'0 14px', gap:'6px',
+            boxShadow:'0 2px 12px rgba(0,0,0,.25)',
+            cursor:'pointer', display:'flex', alignItems:'center',
+            transition:'all .15s', backdropFilter:'blur(6px)',
           }}
-          onMouseEnter={e => { e.currentTarget.style.transform='scale(1.1)'; e.currentTarget.style.boxShadow='0 6px 28px rgba(201,168,76,.6)' }}
-          onMouseLeave={e => { e.currentTarget.style.transform='scale(1)';   e.currentTarget.style.boxShadow='0 4px 20px rgba(201,168,76,.45)' }}
+          onMouseEnter={e => { e.currentTarget.style.background='rgba(91,164,245,.18)'; e.currentTarget.style.borderColor='rgba(91,164,245,.5)' }}
+          onMouseLeave={e => { e.currentTarget.style.background='rgba(91,164,245,.08)'; e.currentTarget.style.borderColor='rgba(91,164,245,.3)' }}
           title="Lançar operação"
-        >+</button>
+        ><span style={{ fontSize:'14px' }}>✏️</span> Lançar</button>
       )}
 
       {/* ── Modal lançar ─────────────────────────────────────────────── */}

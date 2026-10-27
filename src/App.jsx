@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard'
 import Config from './pages/Config'
 import Performance from './pages/Performance'
 import Operar from './pages/Operar'
+import Lancar from './pages/Lancar'
 import Admin from './pages/Admin'
 
 function Private({ children }) {
@@ -27,6 +28,7 @@ function AppRoutes() {
       <Route path="/operar"      element={<Private><Operar /></Private>} />
       <Route path="/config"      element={<Private><Config /></Private>} />
       <Route path="/performance" element={<Private><Performance /></Private>} />
+      <Route path="/lancar"      element={<Private><Lancar /></Private>} />
       <Route path="/admin"       element={<AdminOnly><Admin /></AdminOnly>} />
       <Route path="*"            element={<Navigate to="/" replace />} />
     </Routes>
