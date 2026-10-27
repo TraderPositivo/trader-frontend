@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
+import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 export default function Nav({ janelaBadge }) {
   const { user, logout } = useAuth()
-  const navigate = useNavigate()
+  const navigate  = useNavigate()
+  const location  = useLocation()
   const [clock, setClock] = useState('')
   const [janelaStatus, setJanelaStatus] = useState(null)
 
@@ -24,8 +25,10 @@ export default function Nav({ janelaBadge }) {
   }, [])
 
   function handleLogout() { logout(); navigate('/login') }
+  const onLancar = location.pathname === '/lancar'
 
   return (
+    <>
     <header style={{
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       padding: '0 24px', height: '54px',
@@ -112,5 +115,24 @@ export default function Nav({ janelaBadge }) {
         </button>
       </div>
     </header>
+
+    {/* FAB global — aparece em todas as páginas exceto /lancar e /login */}
+    {user && !onLancar && (
+      <button
+        onClick={() => navigate('/lancar')}
+        style={{
+          position:'fixed', bottom:'24px', right:'24px', zIndex:500,
+          height:'36px', borderRadius:'18px', border:'1px solid rgba(91,164,245,.3)',
+          background:'rgba(12,12,14,.75)', backdropFilter:'blur(8px)',
+          color:'#5ba4f5', fontSize:'12px', fontWeight:700,
+          padding:'0 16px', display:'flex', alignItems:'center', gap:'6px',
+          boxShadow:'0 2px 14px rgba(0,0,0,.4)', cursor:'pointer', transition:'all .15s',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.background='rgba(91,164,245,.15)'; e.currentTarget.style.borderColor='rgba(91,164,245,.5)' }}
+        onMouseLeave={e => { e.currentTarget.style.background='rgba(12,12,14,.75)'; e.currentTarget.style.borderColor='rgba(91,164,245,.3)' }}
+        title="Lançar operação"
+      ><span>✏️</span> Lançar</button>
+    )}
+    </>
   )
 }

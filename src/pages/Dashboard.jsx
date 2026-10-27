@@ -750,12 +750,8 @@ function SparklineSection({ selConta }) {
   useEffect(() => {
     if (!selConta) return
     api.get(`operacoes?conta_id=${selConta}`).then(ops => {
-      // agrupa por data, últimos 20 pregões
       const map = {}
-      ops.forEach(o => {
-        const d = o.data_operacao
-        map[d] = (map[d] || 0) + parseFloat(o.resultado || 0)
-      })
+      ops.forEach(o => { const d = o.data_operacao; map[d] = (map[d] || 0) + parseFloat(o.resultado || 0) })
       const sorted = Object.entries(map).sort((a,b) => a[0].localeCompare(b[0])).slice(-20)
       setBars(sorted.map(([d, v]) => ({ d, v })))
     }).catch(() => {})
@@ -764,41 +760,54 @@ function SparklineSection({ selConta }) {
   if (bars.length < 2) return null
 
   const maxAbs = Math.max(...bars.map(b => Math.abs(b.v)), 1)
-  const H = 56, W = 100
-  const barW = W / bars.length - 1.5
-  const total = bars.reduce((s, b) => s + b.v, 0)
-  const wins  = bars.filter(b => b.v > 0).length
+  const total  = bars.reduce((s, b) => s + b.v, 0)
+  const wins   = bars.filter(b => b.v > 0).length
+  const maxBarH = 30  // px, de cada lado da linha zero
 
   return (
     <div style={{ background:'var(--bg2)', border:'1px solid var(--border)', borderRadius:'12px', padding:'14px 18px', marginBottom:'18px' }}>
-      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'10px' }}>
+      {/* Header */}
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'12px' }}>
         <span style={{ fontSize:'10px', fontWeight:700, letterSpacing:'2px', textTransform:'uppercase', color:'var(--txt3)' }}>
           Últimos {bars.length} pregões
         </span>
-        <div style={{ display:'flex', gap:'14px', fontSize:'11px' }}>
-          <span style={{ color: total >= 0 ? 'var(--green)' : 'var(--red)', fontFamily:"'JetBrains Mono',monospace", fontWeight:700 }}>
+        <div style={{ display:'flex', gap:'16px', alignItems:'center' }}>
+          <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:'13px', fontWeight:700, color: total >= 0 ? 'var(--green)' : 'var(--red)' }}>
             {total >= 0 ? '+' : ''}R$ {Math.abs(total).toLocaleString('pt-BR',{minimumFractionDigits:2})}
           </span>
-          <span style={{ color:'var(--txt3)' }}>{wins}/{bars.length} positivos</span>
-          <a href="/performance" style={{ color:'var(--gold)', fontSize:'10px', fontWeight:700, textDecoration:'none' }}>ver detalhes →</a>
+          <span style={{ fontSize:'11px', color:'var(--txt3)' }}>{wins}/{bars.length} positivos</span>
+          <a href="/performance" style={{ color:'var(--gold)', fontSize:'10px', fontWeight:700, textDecoration:'none', opacity:.8 }}>detalhes →</a>
         </div>
       </div>
-      <svg viewBox={`0 0 ${W} ${H}`} style={{ width:'100%', height:'60px', overflow:'visible' }} preserveAspectRatio="none">
-        {bars.map((b, i) => {
-          const h = Math.max(1.5, (Math.abs(b.v) / maxAbs) * (H / 2 - 2))
-          const x = i * (W / bars.length) + 0.75
-          const positive = b.v >= 0
+
+      {/* Barras CSS */}
+      <div style={{ position:'relative', height:`${maxBarH * 2 + 2}px`, display:'flex', gap:'2px', alignItems:'center' }}>
+        {/* linha zero */}
+        <div style={{ position:'absolute', left:0, right:0, top:'50%', height:'1px', background:'var(--border2)', transform:'translateY(-50%)' }} />
+        {bars.map(b => {
+          const h = Math.max(3, (Math.abs(b.v) / maxAbs) * maxBarH)
+          const pos = b.v >= 0
           return (
-            <rect key={b.d}
-              x={x} y={positive ? H/2 - h : H/2}
-              width={barW} height={h}
-              fill={positive ? '#4caf82' : '#e05c6a'}
-              opacity="0.85" rx="0.5"
-            />
+            <div key={b.d} title={`${b.d}: ${b.v >= 0 ? '+' : ''}R$${Math.abs(b.v).toFixed(0)}`}
+              style={{
+                flex: 1, position:'relative', height:`${maxBarH * 2}px`,
+                display:'flex', flexDirection:'column',
+                justifyContent: pos ? 'flex-end' : 'flex-start',
+                alignItems:'center',
+              }}
+            >
+              <div style={{
+                width:'100%', height:`${h}px`, minHeight:'3px',
+                background: pos ? '#4caf82' : '#e05c6a',
+                borderRadius: pos ? '2px 2px 0 0' : '0 0 2px 2px',
+                opacity: 0.85,
+                marginBottom: pos ? `${maxBarH}px` : 0,
+                marginTop:    pos ? 0 : `${maxBarH}px`,
+              }} />
+            </div>
           )
         })}
-        <line x1="0" y1={H/2} x2={W} y2={H/2} stroke="var(--border2)" strokeWidth="0.5" />
-      </svg>
+      </div>
     </div>
   )
 }
@@ -809,7 +818,6 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [erro,    setErro]    = useState('')
   const [selId,   setSelId]   = useState(null)
-  const [fabOpen, setFabOpen] = useState(false)
   const [regTab,  setRegTab]  = useState('csv')
 
   const load = useCallback(async () => {
@@ -942,54 +950,6 @@ export default function Dashboard() {
         )}
       </main>
 
-      {/* ── FAB lançar operação ───────────────────────────────────────── */}
-      {contas.length > 0 && (
-        <button
-          onClick={() => setFabOpen(true)}
-          style={{
-            position:'fixed', bottom:'24px', right:'24px', zIndex:100,
-            height:'36px', borderRadius:'18px', border:'1px solid rgba(91,164,245,.3)',
-            background:'rgba(91,164,245,.08)',
-            color:'#5ba4f5', fontSize:'12px', fontWeight:700,
-            padding:'0 14px', gap:'6px',
-            boxShadow:'0 2px 12px rgba(0,0,0,.25)',
-            cursor:'pointer', display:'flex', alignItems:'center',
-            transition:'all .15s', backdropFilter:'blur(6px)',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.background='rgba(91,164,245,.18)'; e.currentTarget.style.borderColor='rgba(91,164,245,.5)' }}
-          onMouseLeave={e => { e.currentTarget.style.background='rgba(91,164,245,.08)'; e.currentTarget.style.borderColor='rgba(91,164,245,.3)' }}
-          title="Lançar operação"
-        ><span style={{ fontSize:'14px' }}>✏️</span> Lançar</button>
-      )}
-
-      {/* ── Modal lançar ─────────────────────────────────────────────── */}
-      {fabOpen && (
-        <div
-          onClick={e => e.target === e.currentTarget && setFabOpen(false)}
-          style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.72)', zIndex:200, display:'flex', alignItems:'flex-end', justifyContent:'flex-end', backdropFilter:'blur(4px)', padding:'0 28px 100px' }}
-        >
-          <div style={{ width:'100%', maxWidth:'440px', background:'var(--bg2)', border:'1px solid var(--border2)', borderRadius:'16px', overflow:'hidden', boxShadow:'0 8px 40px rgba(0,0,0,.5)' }}>
-            <div style={{ padding:'14px 18px', borderBottom:'1px solid var(--border)', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-              <div style={{ display:'flex', gap:'4px' }}>
-                {[{id:'csv',label:'📂 CSV Profit'},{id:'manual',label:'✏️ Manual'}].map(({ id, label }) => (
-                  <button key={id} onClick={() => setRegTab(id)} style={{
-                    padding:'5px 12px', borderRadius:'6px', fontSize:'12px', fontWeight:700, border:'none', cursor:'pointer',
-                    background: regTab===id ? 'var(--gold-bg)' : 'transparent',
-                    color: regTab===id ? 'var(--gold)' : 'var(--txt3)',
-                  }}>{label}</button>
-                ))}
-              </div>
-              <button onClick={() => setFabOpen(false)} style={{ background:'none', border:'none', color:'var(--txt3)', fontSize:'18px', cursor:'pointer', lineHeight:1 }}>✕</button>
-            </div>
-            <div style={{ padding:'18px' }}>
-              {regTab === 'manual'
-                ? <RegisterPanel contas={contas} selConta={selId} onSuccess={() => { load(); setFabOpen(false) }} />
-                : <CsvImportPanel contas={contas} selConta={selId} onSuccess={() => { load(); setFabOpen(false) }} />
-              }
-            </div>
-          </div>
-        </div>
-      )}
     </>
   )
 }
