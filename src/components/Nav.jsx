@@ -8,6 +8,9 @@ export default function Nav({ janelaBadge }) {
   const location  = useLocation()
   const [clock, setClock] = useState('')
   const [janelaStatus, setJanelaStatus] = useState(null)
+  const [theme, setTheme] = useState(() => {
+    try { return localStorage.getItem('ts_theme') || 'dark' } catch { return 'dark' }
+  })
 
   useEffect(() => {
     if (!janelaBadge) { setJanelaStatus(null); return }
@@ -18,6 +21,11 @@ export default function Nav({ janelaBadge }) {
   }, [janelaBadge])
 
   useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    try { localStorage.setItem('ts_theme', theme) } catch {}
+  }, [theme])
+
+  useEffect(() => {
     const tick = () => setClock(new Date().toLocaleTimeString('pt-BR'))
     tick()
     const t = setInterval(tick, 1000)
@@ -25,6 +33,7 @@ export default function Nav({ janelaBadge }) {
   }, [])
 
   function handleLogout() { logout(); navigate('/login') }
+  function toggleTheme() { setTheme(t => t === 'dark' ? 'light' : 'dark') }
   const onLancar = location.pathname === '/lancar'
 
   return (
@@ -91,6 +100,12 @@ export default function Nav({ janelaBadge }) {
         )}
         <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '13px', color: 'var(--txt2)' }}>{clock}</span>
 
+        <button onClick={toggleTheme} title={theme === 'dark' ? 'Modo claro' : 'Modo escuro'} style={{
+          padding:'4px 8px', borderRadius:'6px', fontSize:'13px', lineHeight:1,
+          border:'1px solid var(--border)', background:'transparent', color:'var(--txt3)',
+          cursor:'pointer', transition:'all .15s',
+        }}>{theme === 'dark' ? '☀' : '◑'}</button>
+
         <div style={{
           display: 'flex', alignItems: 'center', gap: '7px',
           background: 'var(--bg3)', border: '1px solid var(--border)',
@@ -124,13 +139,15 @@ export default function Nav({ janelaBadge }) {
         style={{
           position:'fixed', bottom:'24px', right:'24px', zIndex:500,
           height:'36px', borderRadius:'18px', border:'1px solid rgba(91,164,245,.3)',
-          background:'rgba(12,12,14,.75)', backdropFilter:'blur(8px)',
+          background: theme === 'dark' ? 'rgba(17,17,21,.88)' : 'rgba(255,255,255,.92)',
+          backdropFilter:'blur(10px)',
           color:'#5ba4f5', fontSize:'12px', fontWeight:700,
           padding:'0 16px', display:'flex', alignItems:'center', gap:'6px',
-          boxShadow:'0 2px 14px rgba(0,0,0,.4)', cursor:'pointer', transition:'all .15s',
+          boxShadow: theme === 'dark' ? '0 2px 14px rgba(0,0,0,.5)' : '0 2px 14px rgba(0,0,0,.12)',
+          cursor:'pointer', transition:'all .15s',
         }}
         onMouseEnter={e => { e.currentTarget.style.background='rgba(91,164,245,.15)'; e.currentTarget.style.borderColor='rgba(91,164,245,.5)' }}
-        onMouseLeave={e => { e.currentTarget.style.background='rgba(12,12,14,.75)'; e.currentTarget.style.borderColor='rgba(91,164,245,.3)' }}
+        onMouseLeave={e => { e.currentTarget.style.background= theme === 'dark' ? 'rgba(17,17,21,.88)' : 'rgba(255,255,255,.92)'; e.currentTarget.style.borderColor='rgba(91,164,245,.3)' }}
         title="Lançar operação"
       ><span>✏️</span> Lançar</button>
     )}

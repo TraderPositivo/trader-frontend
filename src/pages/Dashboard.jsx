@@ -743,9 +743,10 @@ function Panel({ title, tabs, activeTab, onTab, children }) {
   )
 }
 
-// ─── Mini gráfico sparkline ──────────────────────────────────────────────────
-function SparklineSection({ selConta }) {
-  const [bars, setBars] = useState([])
+// ─── Equity curve ────────────────────────────────────────────────────────────
+function EquityChart({ selConta }) {
+  const [pts,   setPts]   = useState([])
+  const [stats, setStats] = useState(null)
 
   useEffect(() => {
     if (!selConta) return
@@ -753,61 +754,65 @@ function SparklineSection({ selConta }) {
       const map = {}
       ops.forEach(o => { const d = o.data_operacao; map[d] = (map[d] || 0) + parseFloat(o.resultado || 0) })
       const sorted = Object.entries(map).sort((a,b) => a[0].localeCompare(b[0])).slice(-20)
-      setBars(sorted.map(([d, v]) => ({ d, v })))
+      if (sorted.length < 2) { setPts([]); setStats(null); return }
+      let cum = 0
+      const built = sorted.map(([d, v]) => { cum += v; return { d, v, cum } })
+      setPts(built)
+      setStats({ total: cum, wins: sorted.filter(([,v]) => v > 0).length, count: sorted.length })
     }).catch(() => {})
   }, [selConta])
 
-  if (bars.length < 2) return null
+  if (!pts.length || !stats) return null
 
-  const maxAbs = Math.max(...bars.map(b => Math.abs(b.v)), 1)
-  const total  = bars.reduce((s, b) => s + b.v, 0)
-  const wins   = bars.filter(b => b.v > 0).length
-  const maxBarH = 30  // px, de cada lado da linha zero
+  const W = 100, H = 40, PAD = 3
+  const cumVals = [0, ...pts.map(p => p.cum)]
+  const minC = Math.min(...cumVals), maxC = Math.max(...cumVals)
+  const range = maxC - minC || 1
+
+  const mapY = v => PAD + (1 - (v - minC) / range) * (H - PAD * 2)
+  const allPts = [{ x: 0, y: mapY(0) }, ...pts.map((p, i) => ({ x: ((i + 1) / pts.length) * W, y: mapY(p.cum) }))]
+
+  const lineStr = allPts.map(p => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ')
+  const last    = allPts[allPts.length - 1]
+  const floor   = H - PAD + 1
+  const zeroY   = mapY(0)
+  const areaStr = `M0,${floor} ` + allPts.map(p => `L${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ') + ` L${W},${floor} Z`
+
+  const isPos = stats.total >= 0
+  const col   = isPos ? '#4caf82' : '#e05c6a'
+  const gid   = `eg${selConta}`
 
   return (
     <div style={{ background:'var(--bg2)', border:'1px solid var(--border)', borderRadius:'12px', padding:'14px 18px', marginBottom:'18px' }}>
-      {/* Header */}
-      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'12px' }}>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'10px' }}>
         <span style={{ fontSize:'10px', fontWeight:700, letterSpacing:'2px', textTransform:'uppercase', color:'var(--txt3)' }}>
-          Últimos {bars.length} pregões
+          Equity — {stats.count} pregões
         </span>
         <div style={{ display:'flex', gap:'16px', alignItems:'center' }}>
-          <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:'13px', fontWeight:700, color: total >= 0 ? 'var(--green)' : 'var(--red)' }}>
-            {total >= 0 ? '+' : ''}R$ {Math.abs(total).toLocaleString('pt-BR',{minimumFractionDigits:2})}
+          <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:'13px', fontWeight:700, color: isPos ? 'var(--green)' : 'var(--red)' }}>
+            {isPos ? '+' : ''}R$ {Math.abs(stats.total).toLocaleString('pt-BR',{minimumFractionDigits:2})}
           </span>
-          <span style={{ fontSize:'11px', color:'var(--txt3)' }}>{wins}/{bars.length} positivos</span>
-          <a href="/performance" style={{ color:'var(--gold)', fontSize:'10px', fontWeight:700, textDecoration:'none', opacity:.8 }}>detalhes →</a>
+          <span style={{ fontSize:'11px', color:'var(--txt3)' }}>{stats.wins}/{stats.count} positivos</span>
+          <a href="/performance" style={{ color:'var(--gold)', fontSize:'10px', fontWeight:700, textDecoration:'none', opacity:.8 }}>ver mais →</a>
         </div>
       </div>
 
-      {/* Barras CSS */}
-      <div style={{ position:'relative', height:`${maxBarH * 2 + 2}px`, display:'flex', gap:'2px', alignItems:'center' }}>
-        {/* linha zero */}
-        <div style={{ position:'absolute', left:0, right:0, top:'50%', height:'1px', background:'var(--border2)', transform:'translateY(-50%)' }} />
-        {bars.map(b => {
-          const h = Math.max(3, (Math.abs(b.v) / maxAbs) * maxBarH)
-          const pos = b.v >= 0
-          return (
-            <div key={b.d} title={`${b.d}: ${b.v >= 0 ? '+' : ''}R$${Math.abs(b.v).toFixed(0)}`}
-              style={{
-                flex: 1, position:'relative', height:`${maxBarH * 2}px`,
-                display:'flex', flexDirection:'column',
-                justifyContent: pos ? 'flex-end' : 'flex-start',
-                alignItems:'center',
-              }}
-            >
-              <div style={{
-                width:'100%', height:`${h}px`, minHeight:'3px',
-                background: pos ? '#4caf82' : '#e05c6a',
-                borderRadius: pos ? '2px 2px 0 0' : '0 0 2px 2px',
-                opacity: 0.85,
-                marginBottom: pos ? `${maxBarH}px` : 0,
-                marginTop:    pos ? 0 : `${maxBarH}px`,
-              }} />
-            </div>
-          )
-        })}
-      </div>
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="68" preserveAspectRatio="none" style={{ display:'block' }}>
+        <defs>
+          <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={col} stopOpacity="0.28" />
+            <stop offset="100%" stopColor={col} stopOpacity="0.02" />
+          </linearGradient>
+        </defs>
+        {zeroY > PAD + 1 && zeroY < H - PAD - 1 && (
+          <line x1="0" y1={zeroY.toFixed(2)} x2={W} y2={zeroY.toFixed(2)}
+            stroke="rgba(136,136,160,.3)" strokeWidth="0.5" strokeDasharray="1.5,1.5" />
+        )}
+        <path d={areaStr} fill={`url(#${gid})`} />
+        <polyline points={lineStr} fill="none" stroke={col} strokeWidth="1.2" strokeLinejoin="round" strokeLinecap="round" />
+        <circle cx={last.x.toFixed(2)} cy={last.y.toFixed(2)} r="1.4" fill={col} />
+        <circle cx={last.x.toFixed(2)} cy={last.y.toFixed(2)} r="2.4" fill="none" stroke={col} strokeWidth="0.6" strokeOpacity="0.45" />
+      </svg>
     </div>
   )
 }
@@ -929,8 +934,8 @@ export default function Dashboard() {
             {/* Calculadora (apenas com conta selecionada) */}
             <CalculadoraSection contas={contas} selConta={selId} />
 
-            {/* Sparkline performance */}
-            {selId !== null && <SparklineSection selConta={selId} />}
+            {/* Equity curve */}
+            {selId !== null && <EquityChart selConta={selId} />}
 
             {/* Mercado */}
             {selId !== null && <MercadoSection contas={contas} selConta={selId} />}

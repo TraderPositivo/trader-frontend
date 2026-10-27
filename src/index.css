@@ -65,3 +65,33 @@ input, select, textarea { font-family: inherit; }
   border-radius: 12px;
   padding: 20px;
 }
+
+/* ── Tema claro ───────────────────────────────────────────────────────── */
+:root[data-theme="light"] {
+  --bg:      #f3f3f7;
+  --bg2:     #ffffff;
+  --bg3:     #eeeef4;
+  --bg4:     #e6e6ef;
+  --border:  #deded8;
+  --border2: #cdcdd8;
+  --txt:     #1a1a2e;
+  --txt2:    #50507a;
+  --txt3:    #9090b0;
+
+  --gold-bg: rgba(201,168,76,.13);
+  --gold-bd: rgba(201,168,76,.32);
+
+  --green-bg: rgba(76,175,130,.1);
+  --green-bd: rgba(76,175,130,.3);
+
+  --red-bg:  rgba(224,92,106,.1);
+  --red-bd:  rgba(224,92,106,.3);
+}
+
+[data-theme="light"] body {
+  background: var(--bg);
+  color: var(--txt);
+}
+
+[data-theme="light"] ::-webkit-scrollbar-track { background: var(--bg3); }
+[data-theme="light"] ::-webkit-scrollbar-thumb { background: var(--border2); }
