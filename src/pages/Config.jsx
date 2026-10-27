@@ -115,9 +115,6 @@ export default function Config() {
     }
   }, [])
 
-  const ckC = ckItems.filter(i => i.lado === 'COMPRA')
-  const ckV = ckItems.filter(i => i.lado === 'VENDA')
-
   return (
     <>
       <Nav />
