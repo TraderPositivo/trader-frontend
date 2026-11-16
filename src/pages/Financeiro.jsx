@@ -160,6 +160,13 @@ function NotaCard({ item, contas, onChange, onRemove }) {
         </span>
       </div>
 
+      {/* debug: trecho em torno de "ajuste day trade" */}
+      {item.debugText && (
+        <div style={{ marginTop: '8px', padding: '8px 10px', borderRadius: '6px', background: 'rgba(91,164,245,.08)', border: '1px solid rgba(91,164,245,.2)', fontSize: '10px', color: 'var(--txt3)', fontFamily: "'JetBrains Mono',monospace", whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+          <span style={{ color: 'var(--blue)', fontWeight: 700 }}>Debug (texto bruto extraído):</span>{'\n'}{item.debugText}
+        </div>
+      )}
+
       {/* raw text toggle */}
       {item.rawText && (
         <div style={{ marginTop: '10px' }}>
@@ -203,6 +210,7 @@ function UploadSection({ contas, onSaved }) {
           ...it,
           status:     'review',
           rawText:    text,
+          debugText:  parsed._dbg || '',
           confidence: parsed.confidence,
           fields: {
             mes_referencia:  parsed.mes_referencia  || '',
