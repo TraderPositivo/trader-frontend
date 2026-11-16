@@ -8,6 +8,7 @@ import Operar from './pages/Operar'
 import Lancar from './pages/Lancar'
 import Admin from './pages/Admin'
 import Aluno from './pages/Aluno'
+import Financeiro from './pages/Financeiro'
 
 function Private({ children }) {
   const { user, loading } = useAuth()
@@ -40,6 +41,7 @@ function AppRoutes() {
       <Route path="/config"      element={<Private><ComAcesso><Config /></ComAcesso></Private>} />
       <Route path="/performance" element={<Private><ComAcesso><Performance /></ComAcesso></Private>} />
       <Route path="/lancar"      element={<Private><ComAcesso><Lancar /></ComAcesso></Private>} />
+      <Route path="/financeiro"   element={<Private><ComAcesso><Financeiro /></ComAcesso></Private>} />
       <Route path="/aluno"       element={<Private><Aluno /></Private>} />
       <Route path="/admin"       element={<AdminOnly><Admin /></AdminOnly>} />
       <Route path="*"            element={<Navigate to="/" replace />} />
