@@ -111,9 +111,14 @@ function NotaCard({ item, contas, onChange, onRemove }) {
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
         <div>
+          <label style={lbl}>Data do pregão</label>
+          <input style={{ ...inp, borderColor: !fields.data_pregao ? 'rgba(212,168,67,.4)' : 'var(--border2)' }}
+            type="date" value={fields.data_pregao || ''} onChange={e => set('data_pregao', e.target.value)} />
+        </div>
+        <div>
           <label style={lbl}>Mês de referência</label>
-          <input style={{ ...inp, borderColor: !fields.mes_referencia ? 'rgba(224,92,106,.5)' : 'var(--border2)' }}
-            type="month" value={fields.mes_referencia || ''} onChange={e => set('mes_referencia', e.target.value)} />
+          <input style={{ ...inp, background: 'var(--bg3)', opacity: .7 }}
+            type="month" value={fields.data_pregao ? fields.data_pregao.slice(0,7) : (fields.mes_referencia || '')} readOnly />
         </div>
         <div>
           <label style={lbl}>Conta</label>
@@ -201,6 +206,7 @@ function UploadSection({ contas, onSaved }) {
           confidence: parsed.confidence,
           fields: {
             mes_referencia:  parsed.mes_referencia  || '',
+            data_pregao:     parsed.data_pregao     || '',
             conta_id:        '',
             resultado_bruto: parsed.resultado_bruto != null ? String(parsed.resultado_bruto) : '',
             custos:          parsed.custos          != null ? String(parsed.custos)          : '',
@@ -228,7 +234,8 @@ function UploadSection({ contas, onSaved }) {
       try {
         await api.post('financeiro', {
           action:          'salvar',
-          mes_referencia:  fields.mes_referencia,
+          mes_referencia:  fields.data_pregao ? fields.data_pregao.slice(0,7) : fields.mes_referencia,
+          data_pregao:     fields.data_pregao || null,
           conta_id:        fields.conta_id ? parseInt(fields.conta_id) : null,
           resultado_bruto: parseFloat(fields.resultado_bruto) || 0,
           custos:          parseFloat(fields.custos)          || 0,
@@ -265,7 +272,7 @@ function UploadSection({ contas, onSaved }) {
         <div style={{ fontSize: '14px', fontWeight: 700, marginBottom: '4px' }}>Importar notas de corretagem</div>
         <p style={{ fontSize: '11px', color: 'var(--txt3)', lineHeight: 1.7 }}>
           Arraste um ou mais PDFs aqui, ou clique para selecionar<br />
-          <span style={{ opacity: .7 }}>Re-importar o mesmo mês sobrescreve automaticamente os valores anteriores</span>
+          <span style={{ opacity: .7 }}>Cada dia de pregão é uma linha separada — re-importar o mesmo dia sobrescreve</span>
         </p>
       </div>
       <input ref={fileRef} type="file" accept="application/pdf" multiple style={{ display: 'none' }} onChange={e => processFiles(e.target.files)} />
@@ -332,9 +339,10 @@ function SubNotas({ notas, onExcluirNota }) {
     <tr>
       <td colSpan={13} style={{ padding: '0 0 0 36px', background: 'var(--bg3)', borderBottom: '1px solid var(--border)' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
-          <thead><tr>{['Conta','Resultado','Custos','IRRF Ret.','Obs.',''].map(h => <th key={h} style={{ padding: '5px 10px', textAlign: 'left', color: 'var(--txt3)', fontWeight: 600, borderBottom: '1px solid var(--border)' }}>{h}</th>)}</tr></thead>
+          <thead><tr>{['Pregão','Conta','Resultado','Custos','IRRF Ret.','Obs.',''].map(h => <th key={h} style={{ padding: '5px 10px', textAlign: 'left', color: 'var(--txt3)', fontWeight: 600, borderBottom: '1px solid var(--border)' }}>{h}</th>)}</tr></thead>
           <tbody>{notas.map(n => (
             <tr key={n.id}>
+              <td style={{ padding: '5px 10px', borderBottom: '1px solid var(--border)', color: 'var(--txt2)', fontFamily: "'JetBrains Mono',monospace" }}>{n.data_pregao ? dtBR(String(n.data_pregao).slice(0,10)) : '—'}</td>
               <td style={{ padding: '5px 10px', borderBottom: '1px solid var(--border)', color: 'var(--gold)', fontWeight: 700 }}>{n.conta_nome || <span style={{ color: 'var(--txt3)' }}>Consolidado</span>}</td>
               <td style={{ padding: '5px 10px', borderBottom: '1px solid var(--border)', fontFamily: "'JetBrains Mono',monospace", color: n.resultado_bruto >= 0 ? 'var(--green)' : 'var(--red)' }}>{R(n.resultado_bruto)}</td>
               <td style={{ padding: '5px 10px', borderBottom: '1px solid var(--border)', fontFamily: "'JetBrains Mono',monospace", color: 'var(--txt2)' }}>{R(n.custos)}</td>
