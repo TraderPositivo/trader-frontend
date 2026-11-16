@@ -265,7 +265,7 @@ function UploadSection({ contas, onSaved }) {
         <div style={{ fontSize: '14px', fontWeight: 700, marginBottom: '4px' }}>Importar notas de corretagem</div>
         <p style={{ fontSize: '11px', color: 'var(--txt3)', lineHeight: 1.7 }}>
           Arraste um ou mais PDFs aqui, ou clique para selecionar<br />
-          <span style={{ opacity: .7 }}>Profit → Relatório → Notas de Corretagem → Exportar PDF</span>
+          <span style={{ opacity: .7 }}>Re-importar o mesmo mês sobrescreve automaticamente os valores anteriores</span>
         </p>
       </div>
       <input ref={fileRef} type="file" accept="application/pdf" multiple style={{ display: 'none' }} onChange={e => processFiles(e.target.files)} />
@@ -327,12 +327,12 @@ function ModalPagar({ nota, onSave, onCancel }) {
   )
 }
 
-function SubNotas({ notas }) {
+function SubNotas({ notas, onExcluirNota }) {
   return (
     <tr>
       <td colSpan={13} style={{ padding: '0 0 0 36px', background: 'var(--bg3)', borderBottom: '1px solid var(--border)' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
-          <thead><tr>{['Conta','Resultado','Custos','IRRF Ret.','Obs.'].map(h => <th key={h} style={{ padding: '5px 10px', textAlign: 'left', color: 'var(--txt3)', fontWeight: 600, borderBottom: '1px solid var(--border)' }}>{h}</th>)}</tr></thead>
+          <thead><tr>{['Conta','Resultado','Custos','IRRF Ret.','Obs.',''].map(h => <th key={h} style={{ padding: '5px 10px', textAlign: 'left', color: 'var(--txt3)', fontWeight: 600, borderBottom: '1px solid var(--border)' }}>{h}</th>)}</tr></thead>
           <tbody>{notas.map(n => (
             <tr key={n.id}>
               <td style={{ padding: '5px 10px', borderBottom: '1px solid var(--border)', color: 'var(--gold)', fontWeight: 700 }}>{n.conta_nome || <span style={{ color: 'var(--txt3)' }}>Consolidado</span>}</td>
@@ -340,6 +340,12 @@ function SubNotas({ notas }) {
               <td style={{ padding: '5px 10px', borderBottom: '1px solid var(--border)', fontFamily: "'JetBrains Mono',monospace", color: 'var(--txt2)' }}>{R(n.custos)}</td>
               <td style={{ padding: '5px 10px', borderBottom: '1px solid var(--border)', fontFamily: "'JetBrains Mono',monospace", color: 'var(--txt2)' }}>{R(n.irrf_retido)}</td>
               <td style={{ padding: '5px 10px', borderBottom: '1px solid var(--border)', color: 'var(--txt3)' }}>{n.observacao || '—'}</td>
+              <td style={{ padding: '5px 10px', borderBottom: '1px solid var(--border)' }}>
+                <button onClick={() => onExcluirNota(n.id)}
+                  style={{ padding: '2px 8px', borderRadius: '4px', fontSize: '10px', background: 'rgba(224,92,106,.08)', border: '1px solid rgba(224,92,106,.2)', color: 'var(--red)', cursor: 'pointer' }}>
+                  Excluir
+                </button>
+              </td>
             </tr>
           ))}</tbody>
         </table>
@@ -366,8 +372,14 @@ export default function Financeiro() {
 
   async function excluir(mes) {
     const grupo = resumo.find(r => r.mes_referencia === mes)
-    if (!confirm(`Excluir ${(grupo?.notas?.length || 1) > 1 ? 'todas as notas' : 'esta nota'} de ${mesLabel(mes)}?`)) return
+    if (!confirm(`Excluir ${(grupo?.notas?.length || 1) > 1 ? 'todas as notas' : 'esta nota'} de ${mesLabel(mes)}? Você poderá reimportar o PDF depois.`)) return
     for (const n of (grupo?.notas || [])) await api.post('financeiro', { action: 'excluir', id: n.id })
+    load()
+  }
+
+  async function excluirNota(id) {
+    if (!confirm('Excluir esta nota? Você poderá reimportar o PDF depois.')) return
+    await api.post('financeiro', { action: 'excluir', id })
     load()
   }
 
@@ -467,13 +479,13 @@ export default function Financeiro() {
                             <div style={{ display: 'flex', gap: '4px' }}>
                               {n.status === 'pendente' && <button onClick={() => setPagando(n)} style={{ padding: '4px 8px', borderRadius: '5px', fontSize: '10px', fontWeight: 700, background: 'rgba(76,175,130,.12)', border: '1px solid rgba(76,175,130,.25)', color: 'var(--green)', cursor: 'pointer' }}>Pagar</button>}
                               <button onClick={() => excluir(n.mes_referencia)}
-                                onMouseEnter={e => e.target.style.color = 'var(--red)'}
-                                onMouseLeave={e => e.target.style.color = 'var(--txt3)'}
-                                style={{ padding: '4px 7px', borderRadius: '5px', fontSize: '10px', background: 'transparent', border: 'none', color: 'var(--txt3)', cursor: 'pointer' }}>✕</button>
+                                style={{ padding: '4px 10px', borderRadius: '5px', fontSize: '10px', fontWeight: 600, background: 'rgba(224,92,106,.08)', border: '1px solid rgba(224,92,106,.2)', color: 'var(--red)', cursor: 'pointer' }}>
+                                Excluir
+                              </button>
                             </div>
                           </td>
                         </tr>,
-                        exp && multi ? <SubNotas key={`sub-${n.mes_referencia}`} notas={n.notas} /> : null
+                        exp && multi ? <SubNotas key={`sub-${n.mes_referencia}`} notas={n.notas} onExcluirNota={excluirNota} /> : null
                       ]
                     })
                   }
@@ -481,9 +493,8 @@ export default function Financeiro() {
               </table>
             </div>
             <div style={{ padding: '10px 16px', borderTop: '1px solid var(--border)', fontSize: '10px', color: 'var(--txt3)', display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
-              <span>📌 Prejuízo compensa no próximo mês lucrativo</span>
-              <span>📌 DARF abaixo de R$10,00 acumula para o próximo mês (IN 1888/2019)</span>
-              <span>📌 Vencimento: último dia útil do mês seguinte</span>
+              <span>📌 Fórmula: Lucro líq. = Resultado − Custos · Base IR = Lucro líq. − Prej. compensado · DARF = Base × 20% − IRRF retido</span>
+              <span>📌 DARF &lt; R$10 acumula (IN 1888/2019) · Venc.: último dia útil do mês seguinte · Código 6015</span>
             </div>
           </div>
         )}
