@@ -393,6 +393,12 @@ export default function Financeiro() {
     load()
   }
 
+  async function limparTudo() {
+    if (!confirm('Excluir TODAS as notas do histórico? Você poderá reimportar os PDFs depois.')) return
+    await api.post('financeiro', { action: 'limpar_tudo' })
+    load()
+  }
+
   async function excluirNota(id) {
     if (!confirm('Excluir esta nota? Você poderá reimportar o PDF depois.')) return
     await api.post('financeiro', { action: 'excluir', id })
@@ -446,7 +452,8 @@ export default function Financeiro() {
           <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '12px', overflow: 'hidden' }}>
             <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center' }}>
               <span style={{ fontSize: '12px', fontWeight: 700 }}>Notas de corretagem</span>
-              <span style={{ fontSize: '10px', color: 'var(--txt3)', marginLeft: 'auto' }}>IR 20% · código DARF 6015 · mínimo R$10,00 (IN 1888/2019)</span>
+              <span style={{ fontSize: '10px', color: 'var(--txt3)', marginLeft: 'auto', marginRight: '12px' }}>IR 20% · código DARF 6015 · mínimo R$10,00 (IN 1888/2019)</span>
+              <button onClick={limparTudo} style={{ padding: '4px 10px', borderRadius: '5px', fontSize: '10px', background: 'rgba(224,92,106,.08)', border: '1px solid rgba(224,92,106,.25)', color: 'var(--red)', cursor: 'pointer', fontWeight: 700 }}>Limpar tudo</button>
             </div>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
