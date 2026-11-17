@@ -176,6 +176,7 @@ export default function Performance() {
   const [modoRes,  setModoRes]  = useState('liq')
   const [analise,  setAnalise]  = useState(null)
   const [aLoading, setALoading] = useState(false)
+  const [selected, setSelected] = useState(new Set())
 
   const load = useCallback(async (cid, dateFrom, dateTo) => {
     setLoading(true)
@@ -201,9 +202,27 @@ export default function Performance() {
     }
   }
 
+  // limpa seleção ao trocar filtros
+  useEffect(() => { setSelected(new Set()) }, [de, ate, contaId])
+
   async function deletarOp(id) {
     if (!confirm('Excluir operação?')) return
     await api.post('operacoes', { action: 'excluir', id })
+    load(contaId, de, ate)
+  }
+
+  function toggleSelect(id) {
+    setSelected(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
+  }
+  function toggleAll() {
+    if (!d?.ops?.length) return
+    setSelected(prev => prev.size === d.ops.length ? new Set() : new Set(d.ops.map(o => o.id)))
+  }
+  async function deletarSelecionados() {
+    if (!selected.size) return
+    if (!confirm(`Excluir ${selected.size} operaç${selected.size > 1 ? 'ões' : 'ão'}? Essa ação não pode ser desfeita.`)) return
+    for (const id of selected) await api.post('operacoes', { action: 'excluir', id })
+    setSelected(new Set())
     load(contaId, de, ate)
   }
 
@@ -396,25 +415,46 @@ export default function Performance() {
 
             {/* Tabela de operações */}
             <div style={{ background:'var(--bg2)', border:'1px solid var(--border)', borderRadius:'12px', overflow:'hidden', marginBottom:'14px' }}>
-              <div style={{ padding:'13px 18px', borderBottom:'1px solid var(--border)', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+              <div style={{ padding:'13px 18px', borderBottom:'1px solid var(--border)', display:'flex', justifyContent:'space-between', alignItems:'center', gap:'10px' }}>
                 <span style={{ fontSize:'13px', fontWeight:700 }}>Operações do Período</span>
-                <span style={{ fontSize:'11px', color:'var(--txt3)' }}>{d.total_ops} operações</span>
+                <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
+                  {selected.size > 0 && (
+                    <button onClick={deletarSelecionados} style={{ padding:'5px 12px', borderRadius:'6px', fontSize:'11px', fontWeight:700, cursor:'pointer', background:'rgba(224,92,106,.12)', border:'1px solid rgba(224,92,106,.35)', color:'var(--red)' }}>
+                      Excluir {selected.size} selecionada{selected.size > 1 ? 's' : ''}
+                    </button>
+                  )}
+                  <span style={{ fontSize:'11px', color:'var(--txt3)' }}>{d.total_ops} operações</span>
+                </div>
               </div>
               <div style={{ maxHeight:'300px', overflowY:'auto', overscrollBehavior:'contain' }}>
                 <table style={{ width:'100%', borderCollapse:'collapse', fontSize:'12px' }}>
                   <thead>
-                    <tr>{['Data','Hora','Tipo','Inst.','Cts','Pts','Bruto','Custo','Líq',contaId==='todas'?'Conta':'Obs',''].map(h => (
-                      <th key={h} style={{ textAlign:'left', padding:'9px 10px', fontSize:'9px', letterSpacing:'1px', color:'var(--txt3)', textTransform:'uppercase', borderBottom:'1px solid var(--border)', position:'sticky', top:0, background:'var(--bg2)', whiteSpace:'nowrap' }}>{h}</th>
-                    ))}</tr>
+                    <tr>
+                      <th style={{ padding:'9px 10px', borderBottom:'1px solid var(--border)', position:'sticky', top:0, background:'var(--bg2)', width:'32px' }}>
+                        <input type="checkbox"
+                          checked={d.ops.length > 0 && selected.size === d.ops.length}
+                          onChange={toggleAll}
+                          style={{ cursor:'pointer', accentColor:'var(--gold)' }} />
+                      </th>
+                      {['Data','Hora','Tipo','Inst.','Cts','Pts','Bruto','Custo','Líq',contaId==='todas'?'Conta':'Obs',''].map(h => (
+                        <th key={h} style={{ textAlign:'left', padding:'9px 10px', fontSize:'9px', letterSpacing:'1px', color:'var(--txt3)', textTransform:'uppercase', borderBottom:'1px solid var(--border)', position:'sticky', top:0, background:'var(--bg2)', whiteSpace:'nowrap' }}>{h}</th>
+                      ))}
+                    </tr>
                   </thead>
                   <tbody>
                     {d.ops.map(o => {
                       const bruto = o.resultado + (o.custo || 0)
                       const inst  = o.instrumento || 'WIN'
+                      const sel   = selected.has(o.id)
                       return (
                         <tr key={o.id}
-                          onMouseEnter={e => e.currentTarget.querySelectorAll('td').forEach(td => td.style.background='rgba(255,255,255,.02)')}
-                          onMouseLeave={e => e.currentTarget.querySelectorAll('td').forEach(td => td.style.background='')}>
+                          onClick={() => toggleSelect(o.id)}
+                          style={{ cursor:'pointer', background: sel ? 'rgba(224,92,106,.06)' : 'transparent' }}
+                          onMouseEnter={e => { if (!sel) e.currentTarget.style.background='rgba(255,255,255,.02)' }}
+                          onMouseLeave={e => { e.currentTarget.style.background = sel ? 'rgba(224,92,106,.06)' : 'transparent' }}>
+                          <td style={{ padding:'8px 10px', borderBottom:'1px solid var(--border)' }} onClick={e => e.stopPropagation()}>
+                            <input type="checkbox" checked={sel} onChange={() => toggleSelect(o.id)} style={{ cursor:'pointer', accentColor:'var(--gold)' }} />
+                          </td>
                           <td style={{ padding:'8px 10px', borderBottom:'1px solid var(--border)', fontFamily:"'JetBrains Mono',monospace", color:'var(--txt2)', fontSize:'11px', whiteSpace:'nowrap' }}>{fmtDia(o.data_operacao)}</td>
                           <td style={{ padding:'8px 10px', borderBottom:'1px solid var(--border)', fontFamily:"'JetBrains Mono',monospace", color:'var(--txt3)', fontSize:'11px' }}>{(o.horario_entrada||'').slice(0,5)}</td>
                           <td style={{ padding:'8px 10px', borderBottom:'1px solid var(--border)' }}>
@@ -429,7 +469,7 @@ export default function Performance() {
                           <td style={{ padding:'8px 10px', borderBottom:'1px solid var(--border)', fontSize:'10px', color:'var(--txt3)', maxWidth:'140px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
                             {contaId === 'todas' ? (o.conta_nome || '—') : (o.observacao || '—')}
                           </td>
-                          <td style={{ padding:'8px 10px', borderBottom:'1px solid var(--border)' }}>
+                          <td style={{ padding:'8px 10px', borderBottom:'1px solid var(--border)' }} onClick={e => e.stopPropagation()}>
                             <button onClick={() => deletarOp(o.id)}
                               onMouseEnter={e => e.target.style.color='var(--red)'}
                               onMouseLeave={e => e.target.style.color='var(--txt3)'}
