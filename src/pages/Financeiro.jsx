@@ -195,13 +195,18 @@ function UploadSection({ contas, onSaved }) {
     const files = Array.from(fileList).filter(f => f.type === 'application/pdf')
     if (!files.length) return
 
+    // Ignora arquivos já na fila (a não ser que tenham erro — permite retentar)
+    const jaFila = new Set(items.filter(it => it.status !== 'error').map(it => it.filename))
+    const newFiles = files.filter(f => !jaFila.has(f.name))
+    if (!newFiles.length) return
+
     // insere placeholders com status 'parsing'
-    const newItems = files.map(f => ({ id: uid(), filename: f.name, status: 'parsing', fields: {}, rawText: '', confidence: 0 }))
+    const newItems = newFiles.map(f => ({ id: uid(), filename: f.name, status: 'parsing', fields: {}, rawText: '', confidence: 0 }))
     setItems(prev => [...prev, ...newItems])
 
     // processa cada um
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i]
+    for (let i = 0; i < newFiles.length; i++) {
+      const file = newFiles[i]
       const ph   = newItems[i]
       try {
         const text   = await extractTextFromPDF(file)
@@ -256,10 +261,12 @@ function UploadSection({ contas, onSaved }) {
       }
     }
     setSaving(false)
+    // Limpa automaticamente os cards salvos — o histórico abaixo já foi atualizado
+    setItems(prev => prev.filter(it => it.status !== 'saved'))
     onSaved()
   }
 
-  function limpar() { setItems(prev => prev.filter(it => it.status !== 'saved' && it.status !== 'error')) }
+  function limpar() { setItems([]) }
 
   return (
     <div>
@@ -294,20 +301,18 @@ function UploadSection({ contas, onSaved }) {
           ))}
 
           {/* barra de ações */}
-          {(pendentes.length > 0 || temErro) && (
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', paddingTop: '4px' }}>
-              {pendentes.length > 0 && (
-                <button onClick={salvarTudo} disabled={saving}
-                  style={{ flex: 1, padding: '11px', background: 'linear-gradient(135deg,#c9a84c,#e8c97a)', color: '#0c0c0e', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 800, cursor: 'pointer', opacity: saving ? .6 : 1 }}>
-                  {saving ? 'Salvando…' : `Salvar ${pendentes.length} nota${pendentes.length > 1 ? 's' : ''}`}
-                </button>
-              )}
-              <button onClick={limpar}
-                style={{ padding: '11px 18px', borderRadius: '8px', background: 'transparent', border: '1px solid var(--border2)', color: 'var(--txt3)', fontSize: '12px', cursor: 'pointer' }}>
-                Limpar
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', paddingTop: '4px' }}>
+            {pendentes.length > 0 && (
+              <button onClick={salvarTudo} disabled={saving}
+                style={{ flex: 1, padding: '11px', background: 'linear-gradient(135deg,#c9a84c,#e8c97a)', color: '#0c0c0e', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 800, cursor: 'pointer', opacity: saving ? .6 : 1 }}>
+                {saving ? 'Salvando…' : `Salvar ${pendentes.length} nota${pendentes.length > 1 ? 's' : ''}`}
               </button>
-            </div>
-          )}
+            )}
+            <button onClick={limpar}
+              style={{ padding: '11px 18px', borderRadius: '8px', background: 'transparent', border: '1px solid var(--border2)', color: 'var(--txt3)', fontSize: '12px', cursor: 'pointer' }}>
+              Limpar tudo
+            </button>
+          </div>
         </div>
       )}
     </div>
