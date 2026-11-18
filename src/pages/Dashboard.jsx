@@ -426,7 +426,7 @@ function parseProfitCSV(text) {
     const resultado = parseBR(cols[12])  // Res. Operação (R$)
     const pontos    = parseBR(cols[13])  // Res. Operação (pts)
     const ativo     = cols[0]?.trim() || ''
-    const qtd       = cols[4]?.trim() || cols[5]?.trim() || '1'
+    const qtd       = parseInt(cols[4]?.trim() || cols[5]?.trim() || '1') || 1
 
     return {
       data_operacao:   dataOp,
@@ -436,6 +436,7 @@ function parseProfitCSV(text) {
       pontos,
       resultado,
       custo:           0,
+      contratos:       qtd,
       observacao:      `${ativo} (${qtd} cts) — Profit`,
     }
   }).filter(Boolean)
