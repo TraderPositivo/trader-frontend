@@ -779,8 +779,40 @@ function EquityChart({ selConta }) {
   const areaStr = `M0,${floor} ` + allPts.map(p => `L${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ') + ` L${W},${floor} Z`
 
   const isPos = stats.total >= 0
-  const col   = isPos ? '#4caf82' : '#e05c6a'
   const gid   = `eg${selConta}`
+
+  // Fração vertical onde y=0 cai no SVG (0=topo, 1=base)
+  const zeroFrac = Math.max(0, Math.min(1, zeroY / H))
+
+  // Segmenta a polyline em trechos verdes (acima do zero) e vermelhos (abaixo)
+  // ponto "acima do zero" => y < zeroY (SVG: y menor = mais alto)
+  const GREEN = '#4caf82', RED = '#e05c6a'
+  const segments = []
+  for (let i = 0; i < allPts.length - 1; i++) {
+    const a = allPts[i], b = allPts[i + 1]
+    const aAbove = a.y <= zeroY, bAbove = b.y <= zeroY
+    if (aAbove === bAbove) {
+      // mesmo lado — acumula no último segmento ou cria novo
+      if (segments.length && segments[segments.length - 1].col === (aAbove ? GREEN : RED)) {
+        segments[segments.length - 1].pts.push(b)
+      } else {
+        segments.push({ col: aAbove ? GREEN : RED, pts: [a, b] })
+      }
+    } else {
+      // cruza o zero — calcula ponto de cruzamento
+      const t = (zeroY - a.y) / (b.y - a.y)
+      const xc = a.x + t * (b.x - a.x)
+      const cross = { x: xc, y: zeroY }
+      if (segments.length && segments[segments.length - 1].col === (aAbove ? GREEN : RED)) {
+        segments[segments.length - 1].pts.push(cross)
+      } else {
+        segments.push({ col: aAbove ? GREEN : RED, pts: [a, cross] })
+      }
+      segments.push({ col: bAbove ? GREEN : RED, pts: [cross, b] })
+    }
+  }
+
+  const lastCol = isPos ? GREEN : RED
 
   return (
     <div style={{ background:'var(--bg2)', border:'1px solid var(--border)', borderRadius:'12px', padding:'14px 18px', marginBottom:'18px' }}>
@@ -800,18 +832,24 @@ function EquityChart({ selConta }) {
       <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="68" preserveAspectRatio="none" style={{ display:'block' }}>
         <defs>
           <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={col} stopOpacity="0.28" />
-            <stop offset="100%" stopColor={col} stopOpacity="0.02" />
+            {zeroFrac > 0.01 && <stop offset="0%"                        stopColor={GREEN} stopOpacity="0.28" />}
+            {zeroFrac > 0.01 && <stop offset={`${(zeroFrac*100).toFixed(1)}%`} stopColor={GREEN} stopOpacity="0.04" />}
+            {zeroFrac < 0.99 && <stop offset={`${(zeroFrac*100).toFixed(1)}%`} stopColor={RED}   stopOpacity="0.04" />}
+            {zeroFrac < 0.99 && <stop offset="100%"                       stopColor={RED}   stopOpacity="0.28" />}
           </linearGradient>
         </defs>
         {zeroY > PAD + 1 && zeroY < H - PAD - 1 && (
           <line x1="0" y1={zeroY.toFixed(2)} x2={W} y2={zeroY.toFixed(2)}
-            stroke="rgba(136,136,160,.3)" strokeWidth="0.5" strokeDasharray="1.5,1.5" />
+            stroke="rgba(136,136,160,.35)" strokeWidth="0.5" strokeDasharray="1.5,1.5" />
         )}
         <path d={areaStr} fill={`url(#${gid})`} />
-        <polyline points={lineStr} fill="none" stroke={col} strokeWidth="1.2" strokeLinejoin="round" strokeLinecap="round" />
-        <circle cx={last.x.toFixed(2)} cy={last.y.toFixed(2)} r="1.4" fill={col} />
-        <circle cx={last.x.toFixed(2)} cy={last.y.toFixed(2)} r="2.4" fill="none" stroke={col} strokeWidth="0.6" strokeOpacity="0.45" />
+        {segments.map((seg, i) => (
+          <polyline key={i}
+            points={seg.pts.map(p => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ')}
+            fill="none" stroke={seg.col} strokeWidth="1.2" strokeLinejoin="round" strokeLinecap="round" />
+        ))}
+        <circle cx={last.x.toFixed(2)} cy={last.y.toFixed(2)} r="1.4" fill={lastCol} />
+        <circle cx={last.x.toFixed(2)} cy={last.y.toFixed(2)} r="2.4" fill="none" stroke={lastCol} strokeWidth="0.6" strokeOpacity="0.45" />
       </svg>
     </div>
   )
