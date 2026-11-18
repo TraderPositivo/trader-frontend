@@ -87,20 +87,48 @@ function LineChart({ evolucao }) {
     if (chartRef.current) chartRef.current.destroy()
     const labels = evolucao.map(e => fmtDia(e.data))
     const data   = evolucao.map(e => e.valor)
-    const pos    = data[data.length - 1] >= 0
     const ctx    = ref.current.getContext('2d')
-    const grad   = ctx.createLinearGradient(0, 0, 0, 200)
-    grad.addColorStop(0, pos ? 'rgba(76,175,130,.25)' : 'rgba(224,92,106,.25)')
-    grad.addColorStop(1, pos ? 'rgba(76,175,130,0)'   : 'rgba(224,92,106,0)')
+    const H      = 200
+
+    // Calcula onde y=0 cai no gradiente (0=topo, 1=base)
+    const max = Math.max(...data, 0)
+    const min = Math.min(...data, 0)
+    const range = max - min
+    const zeroAt = range > 0 ? max / range : (max >= 0 ? 1 : 0)
+
+    const grad = ctx.createLinearGradient(0, 0, 0, H)
+    if (zeroAt <= 0.001) {
+      grad.addColorStop(0, 'rgba(224,92,106,.30)')
+      grad.addColorStop(1, 'rgba(224,92,106,.04)')
+    } else if (zeroAt >= 0.999) {
+      grad.addColorStop(0, 'rgba(76,175,130,.30)')
+      grad.addColorStop(1, 'rgba(76,175,130,.04)')
+    } else {
+      grad.addColorStop(0,            'rgba(76,175,130,.30)')
+      grad.addColorStop(zeroAt - 0.001, 'rgba(76,175,130,.08)')
+      grad.addColorStop(zeroAt,         'rgba(224,92,106,.08)')
+      grad.addColorStop(1,              'rgba(224,92,106,.30)')
+    }
+
     chartRef.current = new Chart(ref.current, {
       type: 'line',
-      data: { labels, datasets: [{ data, borderColor: pos ? '#4caf82' : '#e05c6a', backgroundColor: grad, borderWidth: 2, pointRadius: data.length > 20 ? 0 : 3, fill: true, tension: 0.3 }] },
+      data: { labels, datasets: [{
+        data,
+        // segmento verde acima do zero, vermelho abaixo
+        segment: { borderColor: c => c.p0.parsed.y >= 0 ? '#4caf82' : '#e05c6a' },
+        borderColor: '#4caf82',
+        backgroundColor: grad,
+        borderWidth: 2,
+        pointRadius: data.length > 20 ? 0 : 3,
+        pointBackgroundColor: c => (c.parsed?.y ?? 0) >= 0 ? '#4caf82' : '#e05c6a',
+        fill: true, tension: 0.3,
+      }] },
       options: {
         responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => R(ctx.parsed.y) }, backgroundColor: '#17171d', borderColor: '#2c2c38', borderWidth: 1, titleColor: '#8888a0', bodyColor: '#e8e8f0' } },
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => R(c.parsed.y) }, backgroundColor: '#17171d', borderColor: '#2c2c38', borderWidth: 1, titleColor: '#8888a0', bodyColor: '#e8e8f0' } },
         scales: {
           x: { grid: { color: '#1e2028' }, ticks: { color: '#50505f', font: { size: 10 }, maxTicksLimit: 10 } },
-          y: { grid: { color: '#1e2028' }, ticks: { color: '#50505f', font: { size: 10 }, callback: v => R(v) } },
+          y: { grid: { color: c => c.tick.value === 0 ? '#3c3c50' : '#1e2028' }, ticks: { color: '#50505f', font: { size: 10 }, callback: v => R(v) } },
         },
       },
     })
