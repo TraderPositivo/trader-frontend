@@ -18,9 +18,34 @@ const B3_FERIADOS = new Set([
   '2025-05-01','2025-06-19','2025-09-07','2025-10-12','2025-11-02',
   '2025-11-15','2025-11-20','2025-12-25',
   // 2026
-  '2026-01-01','2026-02-16','2026-02-17','2026-04-03','2026-04-21',
-  '2026-05-01','2026-06-04','2026-07-09','2026-09-07','2026-10-12',
-  '2026-11-02','2026-11-15','2026-11-20','2026-12-25',
+  '2026-01-01',                           // Confraternização Universal
+  '2026-02-16','2026-02-17',              // Carnaval
+  '2026-04-03',                           // Sexta-feira Santa
+  '2026-04-21',                           // Tiradentes
+  '2026-05-01',                           // Dia do Trabalho
+  '2026-06-04',                           // Corpus Christi
+  '2026-07-09',                           // Revolução Constitucionalista (SP)
+  '2026-09-07',                           // Independência
+  '2026-10-12',                           // Nossa Senhora Aparecida
+  '2026-11-02',                           // Finados
+  '2026-11-15',                           // Proclamação da República
+  '2026-11-20',                           // Consciência Negra
+  '2026-12-24','2026-12-25',              // Véspera + Natal (B3 fecha 24/12 após meio-dia)
+  '2026-12-31',                           // Véspera de Ano Novo (B3 fecha 31/12)
+  // 2027
+  '2027-01-01',                           // Confraternização Universal
+  '2027-02-08','2027-02-09',              // Carnaval
+  '2027-03-26',                           // Sexta-feira Santa
+  '2027-04-21',                           // Tiradentes
+  '2027-05-01',                           // Dia do Trabalho
+  '2027-05-27',                           // Corpus Christi
+  '2027-09-07',                           // Independência
+  '2027-10-12',                           // Nossa Senhora Aparecida
+  '2027-11-02',                           // Finados
+  '2027-11-15',                           // Proclamação da República
+  '2027-11-20',                           // Consciência Negra
+  '2027-12-24','2027-12-25',              // Véspera + Natal
+  '2027-12-31',                           // Véspera de Ano Novo
 ])
 
 function isPregao(iso) {
@@ -489,7 +514,7 @@ export default function Performance() {
                             <span style={{ display:'inline-block', padding:'2px 7px', borderRadius:'20px', fontSize:'9px', fontWeight:700, background:o.tipo==='COMPRA'?'rgba(77,159,255,.15)':'rgba(212,168,67,.15)', color:o.tipo==='COMPRA'?'#4d9fff':'var(--yellow)' }}>{o.tipo}</span>
                           </td>
                           <td style={{ padding:'8px 10px', borderBottom:'1px solid var(--border)', fontFamily:"'JetBrains Mono',monospace", fontSize:'10px', fontWeight:700, color:instColor(inst) }}>{inst}</td>
-                          <td style={{ padding:'8px 10px', borderBottom:'1px solid var(--border)', fontFamily:"'JetBrains Mono',monospace", fontSize:'11px', color:'var(--txt2)', textAlign:'center' }}>{o.contratos||1}</td>
+                          <td style={{ padding:'8px 10px', borderBottom:'1px solid var(--border)', fontFamily:"'JetBrains Mono',monospace", fontSize:'11px', color:'var(--txt2)', textAlign:'center' }}>{o.contratos > 1 ? o.contratos : (parseInt(o.observacao?.match(/\((\d+)\s*cts\)/)?.[1]) || o.contratos || 1)}</td>
                           <td style={{ padding:'8px 10px', borderBottom:'1px solid var(--border)', fontFamily:"'JetBrains Mono',monospace", color:o.pontos>0?'var(--green)':'var(--red)', fontSize:'11px' }}>{o.pontos>0?'+':''}{o.pontos}</td>
                           <td style={{ padding:'8px 10px', borderBottom:'1px solid var(--border)', fontFamily:"'JetBrains Mono',monospace", color:bruto>=0?'var(--green)':'var(--red)', fontSize:'11px' }}>{R(bruto)}</td>
                           <td style={{ padding:'8px 10px', borderBottom:'1px solid var(--border)', fontFamily:"'JetBrains Mono',monospace", fontSize:'9px', color:'var(--red)' }}>{o.custo>0?`-${R(o.custo)}`:'—'}</td>
