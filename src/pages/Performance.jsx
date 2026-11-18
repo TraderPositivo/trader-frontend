@@ -197,6 +197,7 @@ function gerarAnaliseLocal(d) {
       { icon: lucro >= 0 ? '✅' : '❌', texto: `Resultado líquido: <strong>${R(lucro)}</strong> · Bruto: <strong>${R(d.bruto_total)}</strong> · Custos: <strong>-${R(d.custo_total)}</strong>` },
       { icon: wr >= 50 ? '✅' : '⚠️', texto: `Taxa de acerto: <strong>${wr.toFixed(0)}%</strong> (${d.gains}G · ${d.losses}L de ${totalOps} ops)` },
       { icon: '📊', texto: `Média gain: <strong style="color:var(--green)">${R(d.media_gain)}</strong> · Média loss: <strong style="color:var(--red)">${R(d.media_loss)}</strong> · Fator: <strong>${fator}</strong>` },
+      ...(d.media_gain_cts != null ? [{ icon: '📐', texto: `Por contrato — gain: <strong style="color:var(--green)">${R(d.media_gain_cts)}</strong> · loss: <strong style="color:var(--red)">${R(d.media_loss_cts)}</strong> · pontos médios: <strong>${d.pontos_media >= 0 ? '+' : ''}${d.pontos_media}</strong>/ct` }] : []),
       { icon: '🗓️', texto: `Melhor dia: <strong style="color:var(--green)">${R(d.melhor_dia)}</strong> · Pior dia: <strong style="color:var(--red)">${R(d.pior_dia)}</strong>` },
     ],
     risco: [
@@ -376,10 +377,15 @@ export default function Performance() {
               </div>
 
               <StatCard label="Acerto" value={`${computedWR}%`} color={computedWR>=60?'var(--green)':+computedWR>=40?'var(--yellow)':'var(--red)'} sub={`${computedGains}G · ${computedLosses}L`} />
-              <StatCard label="Média Gain" value={R(d.media_gain)} color="var(--green)" />
-              <StatCard label="Média Loss"  value={R(d.media_loss)} color="var(--red)" />
+              <StatCard label="Média Gain" value={R(d.media_gain)} color="var(--green)" sub={d.media_gain_cts ? `${R(d.media_gain_cts)}/ct` : ''} />
+              <StatCard label="Média Loss"  value={R(d.media_loss)} color="var(--red)"  sub={d.media_loss_cts ? `${R(d.media_loss_cts)}/ct` : ''} />
               <StatCard label="Melhor Dia"  value={R(d.melhor_dia)} color="var(--green)" />
               <StatCard label="Pior Dia"    value={R(d.pior_dia)}   color="var(--red)"  />
+              <div style={{ background:'var(--bg2)', border:'1px solid var(--border)', borderRadius:'10px', padding:'14px 16px' }}>
+                <div style={{ fontSize:'9px', color:'var(--txt3)', textTransform:'uppercase', letterSpacing:'1px', marginBottom:'6px' }}>Pontos / ct</div>
+                <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:'16px', fontWeight:700, color: (d.pontos_media||0) >= 0 ? 'var(--green)' : 'var(--red)' }}>{(d.pontos_media||0) >= 0 ? '+' : ''}{d.pontos_media ?? '—'}</div>
+                <div style={{ fontSize:'9px', color:'var(--txt3)', marginTop:'3px' }}>G: +{d.pontos_gain ?? '—'} · L: {d.pontos_loss ?? '—'}</div>
+              </div>
               <div style={{ background:'var(--bg2)', border:'1px solid var(--border)', borderRadius:'10px', padding:'14px 16px' }}>
                 <div style={{ fontSize:'9px', color:'var(--txt3)', textTransform:'uppercase', letterSpacing:'1px', marginBottom:'6px' }}>Pregões</div>
                 <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:'16px', fontWeight:700, color:'var(--txt)' }}>{pregoes}</div>
