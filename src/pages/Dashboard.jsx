@@ -443,6 +443,41 @@ function parseProfitCSV(text) {
 }
 
 // ─── Painel Import CSV ────────────────────────────────────────────────────────
+function TutorialProfit() {
+  const [open, setOpen] = useState(false)
+  const passos = [
+    { n:1, titulo:'Abra o Relatório de Operações', desc:'No Profit, vá em <strong>Relatório → Operações Realizadas</strong> (atalho: menu superior ou Ctrl+R dependendo da versão).' },
+    { n:2, titulo:'Defina o período', desc:'Escolha a data inicial e final. Recomendado: um mês por arquivo para facilitar a conferência.' },
+    { n:3, titulo:'Selecione a conta correta', desc:'No campo <strong>Conta</strong>, escolha a conta que quer exportar (CPF ou CNPJ da mesa). Cada conta deve ser importada separada.' },
+    { n:4, titulo:'Clique em "Exportar" → CSV', desc:'No canto superior direito da grade clique no ícone de exportar (seta ↓ ou botão <strong>Exportar</strong>) e escolha <strong>CSV</strong>. Salve o arquivo.' },
+    { n:5, titulo:'Importe aqui', desc:'Selecione o CSV salvo no painel abaixo, confirme a conta destino e clique em <strong>Importar</strong>.' },
+  ]
+  return (
+    <div style={{ border:'1px solid var(--border2)', borderRadius:'8px', overflow:'hidden' }}>
+      <button onClick={() => setOpen(o => !o)} style={{ width:'100%', display:'flex', alignItems:'center', justifyContent:'space-between', padding:'9px 12px', background:'var(--bg3)', border:'none', cursor:'pointer', color:'var(--txt2)', fontSize:'12px', fontWeight:600 }}>
+        <span>❓ Como exportar do Profit (Nelogica)?</span>
+        <span style={{ fontSize:'10px', color:'var(--txt3)', transition:'transform .2s', display:'inline-block', transform: open ? 'rotate(180deg)' : 'none' }}>▼</span>
+      </button>
+      {open && (
+        <div style={{ padding:'12px 14px', background:'var(--bg)', display:'flex', flexDirection:'column', gap:'10px' }}>
+          {passos.map(p => (
+            <div key={p.n} style={{ display:'flex', gap:'10px', alignItems:'flex-start' }}>
+              <div style={{ minWidth:'22px', height:'22px', borderRadius:'50%', background:'linear-gradient(135deg,#c9a84c,#e8c97a)', color:'#0c0c0e', fontSize:'10px', fontWeight:900, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, marginTop:'1px' }}>{p.n}</div>
+              <div>
+                <div style={{ fontSize:'11px', fontWeight:700, color:'var(--txt)', marginBottom:'2px' }}>{p.titulo}</div>
+                <div style={{ fontSize:'11px', color:'var(--txt3)', lineHeight:1.5 }} dangerouslySetInnerHTML={{ __html: p.desc }} />
+              </div>
+            </div>
+          ))}
+          <div style={{ marginTop:'4px', padding:'8px 10px', borderRadius:'6px', background:'rgba(201,168,76,.08)', border:'1px solid rgba(201,168,76,.2)', fontSize:'10px', color:'var(--gold)', lineHeight:1.6 }}>
+            💡 <strong>Dica:</strong> o sistema ignora operações duplicadas — pode reimportar o mesmo período sem problema. O contrato (quantidade) é detectado automaticamente.
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function CsvImportPanel({ contas, selConta, onSuccess }) {
   const [cid,      setCid]      = useState(selConta || '')
   const [preview,  setPreview]  = useState(null)   // array de ops parsed
@@ -503,6 +538,8 @@ function CsvImportPanel({ contas, selConta, onSuccess }) {
           </select>
         </div>
       </div>
+
+      <TutorialProfit />
 
       <label style={{ display:'block', border:'2px dashed var(--border2)', borderRadius:'8px', padding:'18px', textAlign:'center', cursor:'pointer', background:'var(--bg3)', color:'var(--txt3)', fontSize:'12px' }}>
         <input type="file" accept=".csv,.txt" style={{ display:'none' }} onChange={handleFile} />
