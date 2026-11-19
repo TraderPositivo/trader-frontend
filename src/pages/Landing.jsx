@@ -16,9 +16,9 @@ export default function Landing() {
     <div style={{ minHeight: '100vh', background: '#080b12', color: '#e8eaf0', fontFamily: "'Syne', sans-serif", overflowX: 'hidden' }}>
 
       {/* NAV */}
-      <nav style={{
+      <nav className="lp-nav" style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '0 48px', height: '60px',
+        height: '60px',
         background: 'rgba(8,11,18,.92)', backdropFilter: 'blur(12px)',
         borderBottom: '1px solid rgba(255,255,255,.06)',
         position: 'sticky', top: 0, zIndex: 100,
@@ -30,7 +30,7 @@ export default function Landing() {
           </span>
         </div>
 
-        <div style={{ display: 'flex', gap: '28px', alignItems: 'center' }}>
+        <div className="lp-nav-links" style={{ gap: '28px', alignItems: 'center' }}>
           {[
             ['Benefícios',      'beneficios'],
             ['Recursos',        'recursos'],
@@ -62,9 +62,9 @@ export default function Landing() {
       </nav>
 
       {/* HERO */}
-      <section style={{
-        maxWidth: '1200px', margin: '0 auto', padding: '80px 48px 100px',
-        display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '64px', alignItems: 'center',
+      <section className="lp-hero lp-section lp-hero-wrap" style={{
+        maxWidth: '1200px', margin: '0 auto',
+        display: 'grid', alignItems: 'center',
         position: 'relative',
       }}>
         {/* glow verde de fundo */}
@@ -87,7 +87,7 @@ export default function Landing() {
             </span>
           </div>
 
-          <h1 style={{ fontSize: '56px', fontWeight: 800, lineHeight: 1.1, margin: '0 0 16px', letterSpacing: '-1.5px' }}>
+          <h1 className="lp-h1" style={{ fontWeight: 800, lineHeight: 1.1, margin: '0 0 16px', letterSpacing: '-1.5px' }}>
             Gestão de Risco<br />
             para Traders<br />
             <span style={{ color: '#00c87a' }}>mais consistentes</span>
@@ -99,7 +99,7 @@ export default function Landing() {
             tomar decisões com mais consciência.
           </p>
 
-          <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
+          <div className="lp-cta-row" style={{ display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
             <button onClick={() => navigate('/login')} style={{
               padding: '13px 24px', borderRadius: '9px', fontSize: '14px', fontWeight: 700,
               background: '#00c87a', color: '#050709', border: 'none', cursor: 'pointer',
@@ -125,7 +125,7 @@ export default function Landing() {
         </div>
 
         {/* MOCKUP DO SISTEMA */}
-        <div style={{ position: 'relative' }}>
+        <div className="lp-mockup" style={{ position: 'relative' }}>
           <div style={{
             background: '#10141e', border: '1px solid rgba(255,255,255,.1)',
             borderRadius: '14px', overflow: 'hidden',
@@ -215,7 +215,7 @@ export default function Landing() {
       </section>
 
       {/* BENEFÍCIOS */}
-      <section id="beneficios" style={{ background: '#0c0f17', borderTop: '1px solid rgba(255,255,255,.05)', padding: '80px 48px' }}>
+      <section id="beneficios" className="lp-section" style={{ background: '#0c0f17', borderTop: '1px solid rgba(255,255,255,.05)' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '56px' }}>
             <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '2px', color: '#00c87a', textTransform: 'uppercase' }}>
@@ -226,7 +226,7 @@ export default function Landing() {
             </h2>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
+          <div className="lp-benefits" style={{ display: 'grid', gap: '20px' }}>
             {[
               { icon: '🎯', title: 'Plano de risco definido',     desc: 'Configure seu risco por operação, limite diário e metas antes de abrir qualquer posição.' },
               { icon: '📊', title: 'Performance em tempo real',   desc: 'Acompanhe seus resultados com gráficos de evolução, drawdown e consistência de retorno.' },
@@ -253,7 +253,7 @@ export default function Landing() {
       </section>
 
       {/* COMO FUNCIONA */}
-      <section id="como-funciona" style={{ padding: '80px 48px' }}>
+      <section id="como-funciona" className="lp-section">
         <div style={{ maxWidth: '900px', margin: '0 auto', textAlign: 'center' }}>
           <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '2px', color: '#00c87a', textTransform: 'uppercase' }}>
             Como funciona
@@ -262,15 +262,14 @@ export default function Landing() {
             Simples, direto, eficiente
           </h2>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0' }}>
+          <div className="lp-steps" style={{ display: 'grid', gap: '0' }}>
             {[
               { n: '01', title: 'Configure seu plano', desc: 'Defina risco por operação, limite de perda diária e janela de operação.' },
               { n: '02', title: 'Lance suas operações', desc: 'Registre cada trade com ativo, direção, entrada, saída e resultado.' },
               { n: '03', title: 'Acompanhe a evolução', desc: 'Veja métricas de performance, curva de capital e consistência.' },
-            ].map((step, i) => (
-              <div key={step.n} style={{
+            ].map((step) => (
+              <div key={step.n} className="lp-step" style={{
                 padding: '32px 28px', position: 'relative',
-                borderRight: i < 2 ? '1px solid rgba(255,255,255,.07)' : 'none',
               }}>
                 <div style={{ fontSize: '48px', fontWeight: 900, color: 'rgba(0,200,122,.12)', lineHeight: 1, marginBottom: '16px' }}>{step.n}</div>
                 <div style={{ fontSize: '15px', fontWeight: 700, marginBottom: '10px', color: '#e8eaf0' }}>{step.title}</div>
@@ -282,8 +281,8 @@ export default function Landing() {
       </section>
 
       {/* CTA FINAL */}
-      <section id="contato" style={{
-        padding: '80px 48px', textAlign: 'center',
+      <section id="contato" className="lp-section" style={{
+        textAlign: 'center',
         background: 'linear-gradient(180deg, transparent, rgba(0,200,122,.04))',
         borderTop: '1px solid rgba(255,255,255,.05)',
       }}>
@@ -309,8 +308,8 @@ export default function Landing() {
       </section>
 
       {/* FOOTER */}
-      <footer style={{
-        padding: '24px 48px', borderTop: '1px solid rgba(255,255,255,.06)',
+      <footer className="lp-footer" style={{
+        borderTop: '1px solid rgba(255,255,255,.06)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         fontSize: '12px', color: 'rgba(232,234,240,.3)',
       }}>
