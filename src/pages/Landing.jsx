@@ -25,7 +25,7 @@ export default function Landing() {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
           <img src="/logo-shield.png" alt="GesRisk" width="30" height="30" style={{ borderRadius: '6px', objectFit: 'contain' }} />
-          <span style={{ fontSize: '15px', fontWeight: 800, letterSpacing: '-.3px' }}>
+          <span className="lp-nav-brand" style={{ fontSize: '15px', fontWeight: 800, letterSpacing: '-.3px' }}>
             Ges<span style={{ color: '#00c87a' }}>Risk</span> Trader
           </span>
         </div>
@@ -49,15 +49,18 @@ export default function Landing() {
           ))}
         </div>
 
-        <button onClick={() => navigate('/login')} style={{
+        <button className="lp-nav-cta" onClick={() => navigate('/login')} style={{
           padding: '9px 20px', borderRadius: '8px', fontSize: '13px', fontWeight: 700,
           background: '#00c87a', color: '#050709', border: 'none', cursor: 'pointer',
           display: 'flex', alignItems: 'center', gap: '6px', transition: 'background .15s',
+          whiteSpace: 'nowrap',
         }}
           onMouseEnter={e => e.currentTarget.style.background = '#00e889'}
           onMouseLeave={e => e.currentTarget.style.background = '#00c87a'}
         >
-          Conhecer o GesRisk <span style={{ fontSize: '14px' }}>↗</span>
+          <span className="lp-nav-cta-long">Conhecer o GesRisk</span>
+          <span className="lp-nav-cta-short">Entrar</span>
+          <span style={{ fontSize: '14px' }}>↗</span>
         </button>
       </nav>
 

@@ -36,6 +36,25 @@ export default function Nav({ janelaBadge }) {
   function toggleTheme() { setTheme(t => t === 'dark' ? 'light' : 'dark') }
   const onLancar = location.pathname === '/lancar'
 
+  const navLinks = [
+    { to: '/',            label: 'Dashboard' },
+    { to: '/operar',      label: '📋 Plano' },
+    { to: '/performance', label: 'Performance' },
+    { to: '/lancar',      label: '✏️ Lançar', lancar: true },
+    { to: '/financeiro',  label: '$ Financeiro' },
+    { to: '/aluno',       label: '← Área do aluno' },
+    { to: '/config',      label: '⚙ Config' },
+    ...(user?.role === 'admin' ? [{ to: '/admin', label: '⚡ Sistema', admin: true }] : []),
+  ]
+
+  const mobileBottomLinks = [
+    { to: '/',            label: 'Home',   icon: '⊞' },
+    { to: '/operar',      label: 'Plano',  icon: '📋' },
+    { to: '/lancar',      label: 'Lançar', icon: '✏️', lancar: true },
+    { to: '/performance', label: 'Perf.',  icon: '📈' },
+    { to: '/config',      label: 'Config', icon: '⚙' },
+  ]
+
   return (
     <>
     <header style={{
@@ -46,22 +65,13 @@ export default function Nav({ janelaBadge }) {
     }}>
       <NavLink to="/" style={{ display: 'flex', alignItems: 'center', gap: '9px', textDecoration: 'none' }}>
         <img src="/logo-shield.png" alt="GesRisk" width="28" height="28" style={{ borderRadius: '6px', objectFit: 'contain' }} />
-        <span style={{ fontSize: '15px', fontWeight: 800, color: 'var(--txt)', letterSpacing: '-.3px' }}>
+        <span className="nav-brand-text" style={{ fontSize: '15px', fontWeight: 800, color: 'var(--txt)', letterSpacing: '-.3px' }}>
           Ges<span style={{ color: 'var(--gold)' }}>Risk</span> Trader
         </span>
       </NavLink>
 
-      <nav style={{ display: 'flex', gap: '3px', alignItems: 'center' }}>
-        {[
-          { to: '/',            label: 'Dashboard' },
-          { to: '/operar',      label: '📋 Plano' },
-          { to: '/performance', label: 'Performance' },
-          { to: '/lancar',      label: '✏️ Lançar', lancar: true },
-          { to: '/financeiro',  label: '$ Financeiro' },
-          { to: '/aluno',       label: '← Área do aluno' },
-          { to: '/config',      label: '⚙ Config' },
-          ...(user?.role === 'admin' ? [{ to: '/admin', label: '⚡ Sistema', admin: true }] : []),
-        ].map(({ to, label, go, admin, lancar }) => (
+      <nav className="nav-desktop-links" style={{ display: 'flex', gap: '3px', alignItems: 'center' }}>
+        {navLinks.map(({ to, label, go, admin, lancar }) => (
           <NavLink key={to} to={to} end={to === '/'} style={({ isActive }) => ({
             padding: '5px 13px', borderRadius: '6px', fontSize: '12px', fontWeight: 600,
             textDecoration: 'none', transition: 'all .15s',
@@ -86,7 +96,7 @@ export default function Nav({ janelaBadge }) {
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
         {janelaStatus && (
-          <span style={{
+          <span className="nav-janela-badge" style={{
             fontFamily: "'JetBrains Mono',monospace", fontSize: '10px', fontWeight: 700,
             padding: '4px 10px', borderRadius: '5px',
             background: janelaStatus.neutral ? 'transparent' : janelaStatus.ok ? 'rgba(0,229,160,.12)' : 'rgba(255,69,96,.1)',
@@ -94,7 +104,7 @@ export default function Nav({ janelaBadge }) {
             border: `1px solid ${janelaStatus.neutral ? 'transparent' : janelaStatus.ok ? 'rgba(0,229,160,.2)' : 'rgba(255,69,96,.2)'}`,
           }}>{janelaStatus.txt}</span>
         )}
-        <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '13px', color: 'var(--txt2)' }}>{clock}</span>
+        <span className="nav-clock" style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '13px', color: 'var(--txt2)' }}>{clock}</span>
 
         <button onClick={toggleTheme} title={theme === 'dark' ? 'Modo claro' : 'Modo escuro'} style={{
           padding:'4px 8px', borderRadius:'6px', fontSize:'13px', lineHeight:1,
@@ -102,7 +112,7 @@ export default function Nav({ janelaBadge }) {
           cursor:'pointer', transition:'all .15s',
         }}>{theme === 'dark' ? '☀' : '◑'}</button>
 
-        <div style={{
+        <div className="nav-user-chip" style={{
           display: 'flex', alignItems: 'center', gap: '7px',
           background: 'var(--bg3)', border: '1px solid var(--border)',
           borderRadius: '8px', padding: '5px 11px',
@@ -128,9 +138,24 @@ export default function Nav({ janelaBadge }) {
       </div>
     </header>
 
-    {/* FAB global — aparece em todas as páginas exceto /lancar e /login */}
+    {/* Barra de navegação inferior — somente mobile */}
+    <nav className="nav-mobile-bottom">
+      {mobileBottomLinks.map(({ to, label, icon, lancar }) => (
+        <NavLink key={to} to={to} end={to === '/'} className={({ isActive }) => `nav-mobile-item${isActive ? ' active' : ''}${lancar ? ' lancar' : ''}`}>
+          <span className="nav-mobile-icon">{icon}</span>
+          <span className="nav-mobile-label">{label}</span>
+        </NavLink>
+      ))}
+      <button onClick={handleLogout} className="nav-mobile-item nav-mobile-logout">
+        <span className="nav-mobile-icon">↩</span>
+        <span className="nav-mobile-label">Sair</span>
+      </button>
+    </nav>
+
+    {/* FAB global — aparece em todas as páginas exceto /lancar e /login — apenas desktop */}
     {user && !onLancar && (
       <button
+        className="nav-fab"
         onClick={() => navigate('/lancar')}
         style={{
           position:'fixed', bottom:'24px', right:'24px', zIndex:500,
