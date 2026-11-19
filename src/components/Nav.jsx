@@ -48,11 +48,11 @@ export default function Nav({ janelaBadge }) {
   ]
 
   const mobileBottomLinks = [
-    { to: '/',            label: 'Home',   icon: '⊞' },
-    { to: '/operar',      label: 'Plano',  icon: '📋' },
-    { to: '/lancar',      label: 'Lançar', icon: '✏️', lancar: true },
-    { to: '/performance', label: 'Perf.',  icon: '📈' },
-    { to: '/config',      label: 'Config', icon: '⚙' },
+    { to: '/',            label: 'Home',      icon: '⊞' },
+    { to: '/operar',      label: 'Plano',     icon: '📋' },
+    { to: '/lancar',      label: 'Lançar',    icon: '✏️', lancar: true },
+    { to: '/financeiro',  label: 'Financeiro', icon: '💰' },
+    { to: '/performance', label: 'Perf.',     icon: '📈' },
   ]
 
   return (
