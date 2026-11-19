@@ -45,14 +45,9 @@ export default function Nav({ janelaBadge }) {
       position: 'sticky', top: 0, zIndex: 100,
     }}>
       <NavLink to="/" style={{ display: 'flex', alignItems: 'center', gap: '9px', textDecoration: 'none' }}>
-        <div style={{
-          width: '28px', height: '28px', borderRadius: '7px',
-          background: 'linear-gradient(135deg, #c9a84c, #e8c97a)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '14px', fontWeight: 900, color: '#0c0c0e',
-        }}>▲</div>
+        <img src="/logo-shield.png" alt="GesRisk" width="28" height="28" style={{ borderRadius: '6px', objectFit: 'contain' }} />
         <span style={{ fontSize: '15px', fontWeight: 800, color: 'var(--txt)', letterSpacing: '-.3px' }}>
-          Trader<span style={{ color: 'var(--gold)' }}>System</span>
+          Ges<span style={{ color: 'var(--gold)' }}>Risk</span> Trader
         </span>
       </NavLink>
 

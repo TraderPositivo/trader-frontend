@@ -74,14 +74,9 @@ export default function Login() {
       <div style={{ width: '100%', maxWidth: '380px', position: 'relative' }}>
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: '36px' }}>
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            width: '48px', height: '48px', borderRadius: '12px',
-            background: 'linear-gradient(135deg,#c9a84c,#e8c97a)',
-            fontSize: '22px', fontWeight: 900, color: '#0c0c0e', marginBottom: '14px',
-          }}>T</div>
+          <img src="/logo-shield.png" alt="GesRisk Trader" width="72" height="72" style={{ marginBottom: '14px', borderRadius: '14px', objectFit: 'contain' }} />
           <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--txt)' }}>
-            Trader<span style={{ color: 'var(--gold)' }}>System</span>
+            Ges<span style={{ color: 'var(--gold)' }}>Risk</span> Trader
           </div>
           <div style={{ fontSize: '12px', color: 'var(--txt3)', marginTop: '4px' }}>
             Gestão de performance em trading
@@ -101,7 +96,7 @@ export default function Login() {
             {['login', 'cadastro'].map(m => (
               <button key={m} onClick={() => trocarModo(m)} style={{
                 flex: 1, padding: '9px', fontSize: '13px', fontWeight: 600, border: 'none',
-                background: modo === m ? 'linear-gradient(135deg,#c9a84c,#e8c97a)' : 'transparent',
+                background: modo === m ? 'linear-gradient(135deg,#00c87a,#39ffa8)' : 'transparent',
                 color: modo === m ? '#0c0c0e' : 'var(--txt3)',
                 cursor: 'pointer', transition: 'all .2s',
               }}>
@@ -181,7 +176,7 @@ export default function Login() {
 
             <button type="submit" disabled={loading} style={{
               width: '100%', padding: '12px', borderRadius: '8px', fontSize: '14px', fontWeight: 700,
-              background: 'linear-gradient(135deg,#c9a84c,#e8c97a)',
+              background: 'linear-gradient(135deg,#00c87a,#39ffa8)',
               color: '#0c0c0e', border: 'none', marginTop: '4px',
               opacity: loading ? .7 : 1, transition: 'opacity .2s', cursor: loading ? 'default' : 'pointer',
             }}>

@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { api } from '../lib/api'
 import { INDICADORES, INSTALACAO_URL, LIVES, AULAS, ZOOM_URL, RENOVAR_URL } from '../lib/conteudoAluno'
 
-// Área do aluno: a porta de entrada depois do login. O TraderSystem é um dos
+// Área do aluno: a porta de entrada depois do login. O GesRisk Trader é um dos
 // itens daqui e só abre com o plano em dia (o servidor também confere).
 
 const PLANOS = { lives: 'Lives Gravadas', sala: 'Sala ao Vivo', mentoria: 'Mentoria' }
@@ -117,16 +117,16 @@ export default function Aluno() {
 
         {!liberado && conferido && (
           <div style={{ ...card, marginTop:'14px', background:'var(--red-bg)', borderColor:'var(--red-bd)', color:'var(--red)', fontSize:'13px', fontWeight:600 }}>
-            Seu acesso venceu. O TraderSystem, a sala e os materiais voltam assim que o plano for renovado. Seus dados e operações continuam guardados.
+            Seu acesso venceu. O GesRisk Trader, a sala e os materiais voltam assim que o plano for renovado. Seus dados e operações continuam guardados.
           </div>
         )}
 
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(280px,1fr))', gap:'12px', marginTop:'18px' }}>
           <div style={{ ...card, borderColor: liberado ? 'var(--gold-bd)' : 'var(--border)', display:'flex', flexDirection:'column', gap:'8px' }}>
             <div style={{ fontSize:'26px' }}>📊</div>
-            <div style={{ fontSize:'17px', fontWeight:800 }}>TraderSystem</div>
+            <div style={{ fontSize:'17px', fontWeight:800 }}>GesRisk Trader</div>
             <div style={{ ...sub, flex:1 }}>Gestão de risco das suas contas: dashboard, plano do pregão, lançamentos e performance.</div>
-            <div><Botao to="/" primario travado={!liberado}>Abrir o TraderSystem →</Botao></div>
+            <div><Botao to="/" primario travado={!liberado}>Abrir o GesRisk Trader →</Botao></div>
           </div>
           <div style={{ ...card, display:'flex', flexDirection:'column', gap:'8px' }}>
             <div style={{ fontSize:'26px' }}>🔴</div>

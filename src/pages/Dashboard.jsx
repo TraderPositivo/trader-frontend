@@ -941,7 +941,7 @@ export default function Dashboard() {
           <div style={{ marginBottom:'18px' }}>
             <div style={{ textAlign:'center', marginBottom:'36px' }}>
               <div style={{ fontSize:'36px', marginBottom:'12px' }}>📊</div>
-              <h2 style={{ fontSize:'22px', fontWeight:800, marginBottom:'6px' }}>Bem-vindo ao TraderSystem</h2>
+              <h2 style={{ fontSize:'22px', fontWeight:800, marginBottom:'6px' }}>Bem-vindo ao GesRisk Trader</h2>
               <p style={{ fontSize:'13px', color:'var(--txt3)' }}>Escolha o tipo de conta para começar</p>
             </div>
             <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(280px,1fr))', gap:'16px', maxWidth:'720px', margin:'0 auto' }}>

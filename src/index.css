@@ -11,10 +11,10 @@
   --txt2:    #8888a0;
   --txt3:    #50505f;
 
-  --gold:    #c9a84c;
-  --gold2:   #e8c97a;
-  --gold-bg: rgba(201,168,76,.08);
-  --gold-bd: rgba(201,168,76,.22);
+  --gold:    #00c87a;
+  --gold2:   #39ffa8;
+  --gold-bg: rgba(0,200,122,.08);
+  --gold-bd: rgba(0,200,122,.22);
 
   --green:   #4caf82;
   --green-bg:rgba(76,175,130,.08);
@@ -78,8 +78,8 @@ input, select, textarea { font-family: inherit; }
   --txt2:    #50507a;
   --txt3:    #9090b0;
 
-  --gold-bg: rgba(201,168,76,.13);
-  --gold-bd: rgba(201,168,76,.32);
+  --gold-bg: rgba(0,200,122,.12);
+  --gold-bd: rgba(0,200,122,.30);
 
   --green-bg: rgba(76,175,130,.1);
   --green-bd: rgba(76,175,130,.3);
