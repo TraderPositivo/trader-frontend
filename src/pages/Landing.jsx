@@ -93,7 +93,7 @@ export default function Landing() {
             <span style={{ color: '#00c87a' }}>mais consistentes</span>
           </h1>
 
-          <p style={{ fontSize: '16px', lineHeight: 1.65, color: 'rgba(232,234,240,.7)', margin: '0 0 40px', maxWidth: '440px' }}>
+          <p className="lp-desc" style={{ fontSize: '16px', lineHeight: 1.65, color: 'rgba(232,234,240,.7)', margin: '0 0 40px', maxWidth: '440px' }}>
             Transforme regras de risco em parte da sua rotina. Com o GesRisk Trader,
             você organiza limites, planeja operações e acompanha sua disciplina para
             tomar decisões com mais consciência.
@@ -221,7 +221,7 @@ export default function Landing() {
             <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '2px', color: '#00c87a', textTransform: 'uppercase' }}>
               Benefícios
             </span>
-            <h2 style={{ fontSize: '36px', fontWeight: 800, margin: '12px 0 0', letterSpacing: '-1px' }}>
+            <h2 className="lp-h2" style={{ fontWeight: 800, margin: '12px 0 0', letterSpacing: '-1px' }}>
               Tudo que você precisa para operar com disciplina
             </h2>
           </div>
@@ -258,7 +258,7 @@ export default function Landing() {
           <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '2px', color: '#00c87a', textTransform: 'uppercase' }}>
             Como funciona
           </span>
-          <h2 style={{ fontSize: '36px', fontWeight: 800, margin: '12px 0 48px', letterSpacing: '-1px' }}>
+          <h2 className="lp-h2" style={{ fontWeight: 800, margin: '12px 0 48px', letterSpacing: '-1px' }}>
             Simples, direto, eficiente
           </h2>
 
@@ -288,7 +288,7 @@ export default function Landing() {
       }}>
         <div style={{ maxWidth: '600px', margin: '0 auto' }}>
           <img src="/logo-shield.png" alt="GesRisk" width="56" height="56" style={{ borderRadius: '12px', marginBottom: '24px' }} />
-          <h2 style={{ fontSize: '36px', fontWeight: 800, margin: '0 0 16px', letterSpacing: '-1px' }}>
+          <h2 className="lp-h2" style={{ fontWeight: 800, margin: '0 0 16px', letterSpacing: '-1px' }}>
             Pronto para operar com mais <span style={{ color: '#00c87a' }}>consistência</span>?
           </h2>
           <p style={{ fontSize: '15px', color: 'rgba(232,234,240,.6)', margin: '0 0 36px', lineHeight: 1.6 }}>
