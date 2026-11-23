@@ -241,7 +241,7 @@ export default function Admin() {
                 </div>
               </div>
               <p style={{ fontSize: '11px', color: 'var(--txt3)', marginTop: '-6px' }}>
-                Depois dessa data o aluno continua entrando na Área do aluno, mas o GesRisk Trader fica bloqueado.
+                Depois dessa data o GesRisk Trader fica bloqueado para este aluno. As contas e operações continuam guardadas.
               </p>
             </div>
 

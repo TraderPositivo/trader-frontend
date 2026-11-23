@@ -39,11 +39,11 @@ export default function Login() {
       if (modo === 'login') {
         const data = await api.post('auth', { action: 'login', email, senha })
         login(data.token, data.usuario)
-        navigate(location.state?.from || (data.usuario.role === 'admin' ? '/admin' : '/aluno'))
+        navigate(location.state?.from || (data.usuario.role === 'admin' ? '/admin' : '/'))
       } else {
         const data = await api.post('auth', { action: 'registrar', nome, email, senha })
         login(data.token, data.usuario)
-        navigate('/aluno')
+        navigate('/')
       }
     } catch (err) {
       setErro(err.message)

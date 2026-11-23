@@ -8,7 +8,7 @@ import Performance from './pages/Performance'
 import Operar from './pages/Operar'
 import Lancar from './pages/Lancar'
 import Admin from './pages/Admin'
-import Aluno from './pages/Aluno'
+import Acesso from './pages/Acesso'
 import Financeiro from './pages/Financeiro'
 
 function Private({ children }) {
@@ -23,7 +23,7 @@ function Private({ children }) {
 // deixa passar; o servidor confere de novo em cada chamada.
 function ComAcesso({ children }) {
   const { user } = useAuth()
-  if (user && user.role !== 'admin' && user.acesso_liberado === false) return <Navigate to="/aluno" replace />
+  if (user && user.role !== 'admin' && user.acesso_liberado === false) return <Navigate to="/acesso" replace />
   return children
 }
 
@@ -50,7 +50,9 @@ function AppRoutes() {
       <Route path="/performance" element={<Private><ComAcesso><Performance /></ComAcesso></Private>} />
       <Route path="/lancar"      element={<Private><ComAcesso><Lancar /></ComAcesso></Private>} />
       <Route path="/financeiro"   element={<Private><ComAcesso><Financeiro /></ComAcesso></Private>} />
-      <Route path="/aluno"       element={<Private><Aluno /></Private>} />
+      <Route path="/acesso"      element={<Private><Acesso /></Private>} />
+      {/* a Área do aluno agora é do Trader Positivo; links antigos voltam para o sistema */}
+      <Route path="/aluno"       element={<Navigate to="/" replace />} />
       <Route path="/admin"       element={<AdminOnly><Admin /></AdminOnly>} />
       <Route path="*"            element={<Navigate to="/" replace />} />
     </Routes>

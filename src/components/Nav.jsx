@@ -42,7 +42,6 @@ export default function Nav({ janelaBadge }) {
     { to: '/performance', label: 'Performance' },
     { to: '/lancar',      label: '✏️ Lançar', lancar: true },
     { to: '/financeiro',  label: '$ Financeiro' },
-    { to: '/aluno',       label: '← Área do aluno' },
     { to: '/config',      label: '⚙ Config' },
     ...(user?.role === 'admin' ? [{ to: '/admin', label: '⚡ Sistema', admin: true }] : []),
   ]
