@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { api } from '../lib/api'
 
-const OWNER_WPP = import.meta.env.VITE_OWNER_WPP || '5500000000000'
+const OWNER_WPP = import.meta.env.VITE_OWNER_WPP || '5561981662045'
 
 function fmtData(iso) { return iso ? iso.split('-').reverse().join('/') : '' }
 
