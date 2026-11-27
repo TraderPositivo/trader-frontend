@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { api } from '../lib/api'
 
@@ -183,6 +183,16 @@ export default function Login() {
               {loading ? (modo === 'login' ? 'Entrando…' : 'Criando conta…') : (modo === 'login' ? 'Entrar' : 'Criar conta grátis')}
             </button>
           </form>
+
+          {modo === 'login' && (
+            <p style={{ textAlign: 'center', marginTop: '14px', marginBottom: 0 }}>
+              <Link to="/esqueceu-senha" style={{ fontSize: '12px', color: 'var(--txt3)', textDecoration: 'none' }}
+                onMouseEnter={e => e.target.style.color = 'var(--gold)'}
+                onMouseLeave={e => e.target.style.color = 'var(--txt3)'}>
+                Esqueceu a senha?
+              </Link>
+            </p>
+          )}
 
           {modo === 'cadastro' && (
             <p style={{ fontSize: '11px', color: 'var(--txt3)', textAlign: 'center', marginTop: '16px', marginBottom: 0 }}>

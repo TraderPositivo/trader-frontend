@@ -10,6 +10,8 @@ import Lancar from './pages/Lancar'
 import Admin from './pages/Admin'
 import Acesso from './pages/Acesso'
 import Financeiro from './pages/Financeiro'
+import EsqueceuSenha from './pages/EsqueceuSenha'
+import RedefinirSenha from './pages/RedefinirSenha'
 
 function Private({ children }) {
   const { user, loading } = useAuth()
@@ -43,7 +45,9 @@ function HomeRoute() {
 function AppRoutes() {
   return (
     <Routes>
-      <Route path="/login"       element={<Login />} />
+      <Route path="/login"           element={<Login />} />
+      <Route path="/esqueceu-senha"  element={<EsqueceuSenha />} />
+      <Route path="/redefinir-senha" element={<RedefinirSenha />} />
       <Route path="/"            element={<HomeRoute />} />
       <Route path="/operar"      element={<Private><ComAcesso><Operar /></ComAcesso></Private>} />
       <Route path="/config"      element={<Private><ComAcesso><Config /></ComAcesso></Private>} />
